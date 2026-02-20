@@ -53,7 +53,7 @@ export const submitToGoogleFormBackground = async (name: string, status: 'H' | '
     if (status === 'H') finalStatus = 'Hadir';
     if (status === 'S') finalStatus = 'Sakit';
     if (status === 'I') finalStatus = 'Izin';
-    if (status === 'A') finalStatus = 'Alpa';
+    if (status === 'A') finalStatus = 'A'; // Sesuai request user: entry.2112276150=A
 
     const params = new URLSearchParams();
     params.append(ENTRY_NAME, name);
