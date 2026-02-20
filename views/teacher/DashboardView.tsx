@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { api, MOCK_USERS } from '../../services/mockData';
-import { Users, UserX, UserCheck, Clock, BellRing, Check, X, Eye, Download, TrendingUp, Award, Database, Loader2 } from 'lucide-react';
+import { Users, UserX, UserCheck, Clock, BellRing, Check, X, Eye, TrendingUp, Award } from 'lucide-react';
 import { AttendanceRecord, TeacherNotification } from '../../types';
 
 const DashboardView: React.FC = () => {
-  const [notifications, setNotifications] = useState<TeacherNotification[]>([]);
   const [pendingRecords, setPendingRecords] = useState<AttendanceRecord[]>([]);
   const [todaysRecords, setTodaysRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [locking, setLocking] = useState(false); // State for lock button
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const loadData = async () => {
-      const notifs = await api.getNotifications();
       const allRecords = await api.getAttendance();
       
       // Filter records for TODAY (Real-time Local)
       const todayStr = new Date().toLocaleDateString('en-CA');
       const todayData = allRecords.filter(r => r.date === todayStr);
 
-      setNotifications(notifs);
       setTodaysRecords(todayData);
       setPendingRecords(allRecords.filter(r => r.status === 'Pending'));
   };
@@ -36,36 +32,6 @@ const DashboardView: React.FC = () => {
       await api.verifyPermit(id, status);
       await loadData();
       setLoading(false);
-  };
-
-  const handleExport = () => {
-      const todayStr = new Date().toLocaleDateString('en-CA');
-      const headers = "Nama,Kelas,Status,Waktu,Keterangan\n";
-      const rows = todaysRecords.map(r => `${r.userName},${r.userClass},${r.status},${r.time},${r.details || '-'}`).join("\n");
-      const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Absensi_${todayStr}.csv`);
-      document.body.appendChild(link);
-      link.click();
-  };
-
-  const handleLockData = async () => {
-      if (!window.confirm("Simpan Semua Data ke Database?\n\nTindakan ini akan mengamankan data dari Spreadsheet ke sistem lokal.\nJika spreadsheet di-reset (ganti bulan), data di akun siswa akan TETAP ADA.")) {
-          return;
-      }
-      
-      setLocking(true);
-      try {
-          const count = await api.lockAttendanceData();
-          alert(`Berhasil mengamankan ${count} data presensi baru!`);
-          await loadData(); // Refresh to ensure UI shows stable state
-      } catch (e) {
-          alert("Gagal menyimpan data. Coba lagi.");
-      } finally {
-          setLocking(false);
-      }
   };
 
   // REAL CALCULATION (Starts at 0)
@@ -113,25 +79,7 @@ const DashboardView: React.FC = () => {
                 Live Data • {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
         </div>
-        <div className="flex items-center gap-3">
-            {/* SAVE BUTTON */}
-            <button 
-                onClick={handleLockData} 
-                disabled={locking}
-                className="flex items-center gap-2 bg-indigo-600 text-white border border-indigo-700 px-5 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-                {locking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                {locking ? 'Menyimpan...' : 'Simpan Semua Data'}
-            </button>
-            
-            <button onClick={handleExport} className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-all hover:shadow-md active:scale-95">
-                <Download className="w-4 h-4" /> Export Data
-            </button>
-            <div className="hidden md:flex flex-col items-end px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Siswa</span>
-                <span className="text-xl font-black text-slate-700">{totalStudents}</span>
-            </div>
-        </div>
+        {/* Buttons have been moved to Sidebar */}
       </header>
 
       {/* Stats Cards */}

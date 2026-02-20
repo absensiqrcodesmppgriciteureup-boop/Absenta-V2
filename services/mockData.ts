@@ -1,6 +1,6 @@
-import { User, AttendanceRecord, Announcement, TeacherNotification, ScheduleItem } from '../types';
+import { User, AttendanceRecord, Announcement, TeacherNotification, ScheduleItem, ShopItem } from '../types';
 import { RAW_STUDENTS_DATA, RAW_IDS } from './rawData';
-import { fetchSheetAttendance } from './sheetService'; 
+import { fetchSheetAttendance, submitToGoogleFormBackground } from './sheetService'; 
 
 // ==========================================
 // 1. RAW DATA GENERATION
@@ -73,26 +73,48 @@ export const getNextLevelProgress = (xp: number) => {
 };
 
 // ==========================================
-// 3. SMART STORAGE & MIGRATION SYSTEM
+// 3. SHOP DATA
+// ==========================================
+export const SHOP_ITEMS: ShopItem[] = [
+    // THEMES
+    { id: 'theme_default', name: 'Absenta Blue', type: 'theme', value: 'blue', price: 0, description: 'Tema standar aplikasi.' },
+    { id: 'theme_emerald', name: 'Nature Green', type: 'theme', value: 'emerald', price: 150, description: 'Nuansa hijau alam yang segar.' },
+    { id: 'theme_rose', name: 'Sakura Pink', type: 'theme', value: 'rose', price: 300, description: 'Warna merah muda yang lembut.' },
+    { id: 'theme_amber', name: 'Sunset Gold', type: 'theme', value: 'amber', price: 500, description: 'Energi semangat matahari terbenam.' },
+    { id: 'theme_violet', name: 'Royal Purple', type: 'theme', value: 'violet', price: 800, description: 'Kesan mewah dan elegan.' },
+    
+    // BORDERS
+    { id: 'border_none', name: 'Standar', type: 'border', value: 'none', price: 0, description: 'Bingkai standar sekolah.' },
+    { id: 'border_nature', name: 'Forest Guardian', type: 'border', value: 'nature', price: 200, description: 'Energi alam dengan aksen dedaunan hijau.' },
+    { id: 'border_electric', name: 'Thunder Storm', type: 'border', value: 'electric', price: 400, description: 'Energi listrik statis bertegangan tinggi.' },
+    { id: 'border_fire', name: 'Magma Warrior', type: 'border', value: 'fire', price: 550, description: 'Api abadi yang membakar semangat juara.' },
+    { id: 'border_shadow', name: 'Shadow Assassin', type: 'border', value: 'shadow', price: 1200, description: 'Diselimuti aura kegelapan misterius.' },
+    { id: 'border_cyber', name: 'Cyberpunk HUD', type: 'border', value: 'cyber', price: 0, description: 'Eksklusif Premium. Teknologi hologram masa depan.', reqPremium: true },
+    { id: 'border_royal', name: 'King Crown', type: 'border', value: 'royal', price: 0, description: 'Eksklusif Premium. Mahkota emas murni.', reqPremium: true },
+];
+
+// ==========================================
+// 4. SMART STORAGE SYSTEM (OPTIMIZED)
 // ==========================================
 
-const STORAGE_KEY_USERS = 'absenta_server_users_v4'; 
+const STORAGE_KEY_USERS = 'absenta_server_users_v5'; 
 const STORAGE_KEY_ATTENDANCE = 'absenta_server_attendance_v2';
 const STORAGE_KEY_NOTIFICATIONS = 'absenta_server_notifications_v2';
-const STORAGE_KEY_DELETED = 'absenta_deleted_ids_v1'; // NEW: Blacklist for deleted IDs
+const STORAGE_KEY_DELETED = 'absenta_deleted_ids_v1'; 
 
+// CACHE VARIABLES
+let IN_MEMORY_SHEET_DATA: AttendanceRecord[] = [];
+let LAST_SHEET_FETCH_TIME = 0;
+const CACHE_TTL = 15000; // 15 Detik Cache (Untuk responsivitas UI)
+
+// Loaders that run ONLY ONCE on app start
 const loadInitialUsers = (): Record<string, User> => {
-    // 1. Load Existing Data
-    const savedJSON = localStorage.getItem(STORAGE_KEY_USERS);
+    let savedJSON = localStorage.getItem(STORAGE_KEY_USERS);
     const savedUsers: Record<string, User> = savedJSON ? JSON.parse(savedJSON) : {};
-    
-    // Load Blacklist
     const deletedIDs: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED) || '[]');
-
-    // 2. Prepare Final Object
     const finalUsers: Record<string, User> = {};
 
-    // 3. Admin Always Exists
+    // Admin
     if (savedUsers['admin']) {
         finalUsers['admin'] = savedUsers['admin'];
         delete savedUsers['admin']; 
@@ -100,11 +122,11 @@ const loadInitialUsers = (): Record<string, User> => {
         finalUsers['admin'] = { uid: '999', nis: 'admin', name: 'Operator Sekolah', role: 'teacher', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&fit=crop' };
     }
 
-    // 4. MIGRATION LOGIC
+    // Merge RAW Data
     DATA_SISWA.forEach((codeUser) => {
         if (deletedIDs.includes(codeUser.pin)) return;
 
-        // Find existing user to preserve XP/Level
+        // Try to match existing
         const nameKey = Object.keys(savedUsers).find(key => {
             const u = savedUsers[key];
             return u.role === 'student' && 
@@ -112,89 +134,57 @@ const loadInitialUsers = (): Record<string, User> => {
                    u.class === codeUser.kelas;
         });
 
+        const defaultUserProps = { spentXp: 0, theme: 'blue', border: 'none', inventory: ['theme_default', 'border_none'], isPremium: false };
+
         if (nameKey) {
-            finalUsers[codeUser.pin] = {
-                ...savedUsers[nameKey],
-                uid: codeUser.id,   
-                nis: codeUser.pin,  
-                name: codeUser.nama,
-                class: codeUser.kelas
-            };
+            finalUsers[codeUser.pin] = { ...defaultUserProps, ...savedUsers[nameKey], uid: codeUser.id, nis: codeUser.pin, name: codeUser.nama, class: codeUser.kelas };
             delete savedUsers[nameKey]; 
             return;
         }
 
         if (savedUsers[codeUser.pin]) {
-             const oldUser = savedUsers[codeUser.pin];
-             finalUsers[codeUser.pin] = {
-                ...oldUser,
-                uid: codeUser.id,
-                nis: codeUser.pin,
-                name: codeUser.nama,
-                class: codeUser.kelas
-            };
-            delete savedUsers[codeUser.pin];
-            return;
+             finalUsers[codeUser.pin] = { ...defaultUserProps, ...savedUsers[codeUser.pin], uid: codeUser.id, nis: codeUser.pin, name: codeUser.nama, class: codeUser.kelas };
+             delete savedUsers[codeUser.pin];
+             return;
         }
 
-        // New User - Default Level 1
+        // New
         finalUsers[codeUser.pin] = {
             uid: codeUser.id,
             nis: codeUser.pin,
             name: codeUser.nama,
             role: 'student',
             class: codeUser.kelas,
-            level: 1, // Start at Level 1
+            level: 1, 
             xp: 0,
+            spentXp: 0,
+            theme: 'blue',
+            border: 'none',
+            inventory: ['theme_default', 'border_none'],
+            isPremium: false,
             photo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(codeUser.nama)}`
         };
     });
 
+    // Add remaining manually created users
     Object.keys(savedUsers).forEach(key => {
-        finalUsers[key] = savedUsers[key];
+        finalUsers[key] = { ...savedUsers[key] };
     });
     
+    // Persist immediately to keep sync
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(finalUsers));
     return finalUsers;
 };
 
-const loadInitialAttendance = (): AttendanceRecord[] => {
-    const saved = localStorage.getItem(STORAGE_KEY_ATTENDANCE);
-    if (saved) return JSON.parse(saved);
-    return [];
-};
-
-const loadInitialNotifications = (): TeacherNotification[] => {
-    const saved = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS);
-    if (saved) return JSON.parse(saved);
-    return [];
-}
-
+// Global Memory State (Single Source of Truth)
 export let MOCK_USERS = loadInitialUsers();
-export let MOCK_ATTENDANCE: AttendanceRecord[] = loadInitialAttendance();
-export let MOCK_NOTIFICATIONS: TeacherNotification[] = loadInitialNotifications();
+export let MOCK_ATTENDANCE: AttendanceRecord[] = JSON.parse(localStorage.getItem(STORAGE_KEY_ATTENDANCE) || '[]');
+export let MOCK_NOTIFICATIONS: TeacherNotification[] = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTIFICATIONS) || '[]');
 
 const saveChanges = () => {
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(MOCK_USERS));
     localStorage.setItem(STORAGE_KEY_ATTENDANCE, JSON.stringify(MOCK_ATTENDANCE));
     localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(MOCK_NOTIFICATIONS));
-};
-
-// === HELPER: CALCULATE XP & UPDATE LEVEL ===
-const calculateUserXPAndLevel = (userId: string, allRecords: AttendanceRecord[]) => {
-    const userRecords = allRecords.filter(r => r.userId === userId);
-    
-    // 1. Calculate XP
-    let xp = 0;
-    userRecords.forEach(r => {
-        if (r.status === 'Hadir') xp += 10;
-        else if (r.status === 'Sakit' || r.status === 'Izin') xp += 5;
-    });
-
-    // 2. Calculate Level based on XP
-    const level = calculateLevel(xp);
-
-    return { xp, level };
 };
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [
@@ -214,162 +204,151 @@ export const MOCK_SCHEDULE: ScheduleItem[] = [
 
 export const api = {
   login: async (nis: string): Promise<User | null> => {
-    // 1. Load User First
+    // Reload only on login to ensure fresh data
     MOCK_USERS = loadInitialUsers(); 
     const cleanNis = nis.trim();
-    const user = MOCK_USERS[cleanNis];
-    
-    if (user) {
-        // === MASTER SYNC ===
-        const sheetRecords = await fetchSheetAttendance();
-        const localRecords = loadInitialAttendance();
-        const mergedMap = new Map<string, AttendanceRecord>();
-
-        localRecords.forEach(r => mergedMap.set(`${r.userId}-${r.date}`, r));
-        sheetRecords.forEach(r => {
-            const key = `${r.userId}-${r.date}`;
-            if (!mergedMap.has(key)) mergedMap.set(key, r);
-        });
-
-        MOCK_ATTENDANCE = Array.from(mergedMap.values());
-        
-        // RECALCULATE XP & LEVEL FOR THIS USER
-        const { xp, level } = calculateUserXPAndLevel(user.uid, MOCK_ATTENDANCE);
-        
-        // Update user object if changed
-        if (user.xp !== xp || user.level !== level) {
-            user.xp = xp;
-            user.level = level;
-            MOCK_USERS[cleanNis] = user;
-            saveChanges();
-        }
-        
-        return user;
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(user || null);
-      }, 500);
-    });
+    // Trigger background sync on login
+    api.getAttendance(true).catch(console.error);
+    return MOCK_USERS[cleanNis] || null;
   },
   
-  // LOCK DATA (Updates XP & Level for everyone)
   lockAttendanceData: async (): Promise<number> => {
+      // Force fetch fresh data for locking
       const sheetRecords = await fetchSheetAttendance();
-      MOCK_ATTENDANCE = loadInitialAttendance();
-      
+      IN_MEMORY_SHEET_DATA = sheetRecords; // Update cache
+      LAST_SHEET_FETCH_TIME = Date.now();
+
       let newRecordsCount = 0;
 
       sheetRecords.forEach(sheetRecord => {
-          const existsIndex = MOCK_ATTENDANCE.findIndex(
-              local => local.userId === sheetRecord.userId && local.date === sheetRecord.date
-          );
-
-          if (existsIndex === -1) {
-              MOCK_ATTENDANCE.push({
-                  ...sheetRecord,
-                  id: `locked-${sheetRecord.userId}-${sheetRecord.date}`,
-                  isVerified: true
-              });
-              newRecordsCount++;
-          } else {
-              if (!MOCK_ATTENDANCE[existsIndex].isVerified) {
-                   MOCK_ATTENDANCE[existsIndex] = {
-                       ...MOCK_ATTENDANCE[existsIndex],
-                       status: sheetRecord.status,
-                       details: sheetRecord.details,
-                       isVerified: true
-                   };
+          const exists = MOCK_ATTENDANCE.some(local => local.userId === sheetRecord.userId && local.date === sheetRecord.date);
+          if (!exists) {
+              MOCK_ATTENDANCE.push({ ...sheetRecord, id: `locked-${sheetRecord.userId}-${sheetRecord.date}`, isVerified: true });
+              
+              // XP Logic
+              const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === sheetRecord.userId);
+              if (userKey) {
+                  let xpAdd = sheetRecord.status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(sheetRecord.status) ? 5 : 0);
+                  if (MOCK_USERS[userKey].isPremium) xpAdd *= 2;
+                  MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + xpAdd;
+                  MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
               }
+              newRecordsCount++;
           }
       });
-
-      // SYNC XP & LEVEL FOR ALL USERS
-      const allUserKeys = Object.keys(MOCK_USERS);
-      allUserKeys.forEach(key => {
-          const u = MOCK_USERS[key];
-          const { xp, level } = calculateUserXPAndLevel(u.uid, MOCK_ATTENDANCE);
-          if (u.xp !== xp || u.level !== level) {
-              u.xp = xp;
-              u.level = level;
-              MOCK_USERS[key] = u;
-          }
-      });
-
       saveChanges();
-      
-      return new Promise(resolve => setTimeout(() => resolve(newRecordsCount), 1000));
+      return newRecordsCount;
   },
   
+  resetLocalData: async (): Promise<void> => {
+      localStorage.removeItem(STORAGE_KEY_ATTENDANCE);
+      MOCK_ATTENDANCE = [];
+      IN_MEMORY_SHEET_DATA = [];
+      LAST_SHEET_FETCH_TIME = 0;
+      return;
+  },
+
   getUser: async (nis: string): Promise<User | null> => {
-     const users = loadInitialUsers();
-     return users[nis] || null; 
+     return MOCK_USERS[nis] || null; 
   },
 
-  // NEW: INSTANT LOCAL GET
+  getAllStudents: async (): Promise<User[]> => {
+      // Use In-Memory Data (Fast)
+      return Object.values(MOCK_USERS).filter(u => u.role === 'student');
+  },
+  
+  updateUserProfile: async (uid: string, data: { photo?: string }): Promise<boolean> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (!userKey) return false;
+      if (data.photo) MOCK_USERS[userKey].photo = data.photo;
+      saveChanges();
+      return true;
+  },
+
   getLocalAttendance: (): AttendanceRecord[] => {
-      return loadInitialAttendance();
+      return MOCK_ATTENDANCE;
   },
 
-  getAttendance: async (): Promise<AttendanceRecord[]> => {
-    const local = loadInitialAttendance();
-    const sheet = await fetchSheetAttendance();
-    
-    const mergedMap = new Map<string, AttendanceRecord>();
-    local.forEach(r => mergedMap.set(`${r.userId}-${r.date}`, r));
-    sheet.forEach(r => {
-        if (!mergedMap.has(`${r.userId}-${r.date}`)) mergedMap.set(`${r.userId}-${r.date}`, r);
-    });
+  // === CORE FUNCTION: GET ATTENDANCE ===
+  getAttendance: async (forceUpdate = false): Promise<AttendanceRecord[]> => {
+      const now = Date.now();
+      const isStale = (now - LAST_SHEET_FETCH_TIME) > CACHE_TTL;
+      const hasCache = IN_MEMORY_SHEET_DATA.length > 0;
 
-    return Array.from(mergedMap.values());
+      // STRATEGY: Stale-While-Revalidate
+      // 1. If Forced Update OR No Cache => Block and Await Fetch
+      // 2. If Stale but Has Cache => Return Cache, Fetch in Background
+      // 3. If Fresh => Return Cache
+
+      if (forceUpdate || !hasCache) {
+          try {
+              // Blocking fetch for critical updates or first load
+              IN_MEMORY_SHEET_DATA = await fetchSheetAttendance();
+              LAST_SHEET_FETCH_TIME = now;
+          } catch (e) {
+              console.error("[Data] Sync failed, using local only", e);
+          }
+      } else if (isStale) {
+          // Non-blocking background refresh
+          fetchSheetAttendance().then(data => {
+              IN_MEMORY_SHEET_DATA = data;
+              LAST_SHEET_FETCH_TIME = Date.now();
+              console.log("[Data] Background sync complete");
+          }).catch(console.error);
+      }
+
+      // MERGE: Local (Manual/Locked) + Sheet (Auto)
+      // Local records take precedence for same User+Date
+      const mergedMap = new Map<string, AttendanceRecord>();
+
+      // 1. Add Sheet Data First (Base Layer)
+      IN_MEMORY_SHEET_DATA.forEach(r => {
+          mergedMap.set(`${r.userId}-${r.date}`, r);
+      });
+
+      // 2. Add Local Data (Override Layer)
+      MOCK_ATTENDANCE.forEach(r => {
+          mergedMap.set(`${r.userId}-${r.date}`, r);
+      });
+
+      return Array.from(mergedMap.values());
   },
   
   getNotifications: async (): Promise<TeacherNotification[]> => {
-    MOCK_NOTIFICATIONS = loadInitialNotifications();
-    return new Promise(resolve => setTimeout(() => resolve([...MOCK_NOTIFICATIONS]), 300));
+    return MOCK_NOTIFICATIONS;
   },
   
   getLeaderboard: async (): Promise<User[]> => {
-      const users = loadInitialUsers();
-      return new Promise(resolve => {
-          const sorted = Object.values(users)
-            .filter(u => u.role === 'student')
-            .sort((a, b) => (b.xp || 0) - (a.xp || 0))
-            .slice(0, 50);
-          setTimeout(() => resolve(sorted), 400);
-      });
+      return Object.values(MOCK_USERS)
+        .filter(u => u.role === 'student')
+        .sort((a, b) => ((a.xp||0)-(a.spentXp||0)) - ((b.xp||0)-(b.spentXp||0)))
+        .reverse()
+        .slice(0, 50);
   },
 
   verifyPermit: async (recordId: string, status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpa'): Promise<boolean> => {
-     return new Promise(resolve => {
-         MOCK_ATTENDANCE = loadInitialAttendance();
-         const idx = MOCK_ATTENDANCE.findIndex(a => a.id === recordId);
-         if (idx !== -1) {
-             MOCK_ATTENDANCE[idx].status = status;
-             MOCK_ATTENDANCE[idx].isVerified = true;
-             
-             // Update XP & Level immediately
-             const uid = MOCK_ATTENDANCE[idx].userId;
-             const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === uid);
-             if (userKey) {
-                 const { xp, level } = calculateUserXPAndLevel(uid, MOCK_ATTENDANCE);
-                 MOCK_USERS[userKey].xp = xp;
-                 MOCK_USERS[userKey].level = level;
-             }
-
-             saveChanges();
+     const idx = MOCK_ATTENDANCE.findIndex(a => a.id === recordId);
+     if (idx !== -1) {
+         MOCK_ATTENDANCE[idx].status = status;
+         MOCK_ATTENDANCE[idx].isVerified = true;
+         
+         const uid = MOCK_ATTENDANCE[idx].userId;
+         const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === uid);
+         
+         if (userKey) {
+             let newPoints = status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(status) ? 5 : 0);
+             if (MOCK_USERS[userKey].isPremium) newPoints *= 2;
+             MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + newPoints;
+             MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
          }
-         setTimeout(() => resolve(true), 600);
-     })
+         saveChanges();
+         return true;
+     }
+     return false;
   },
   
   submitPermit: async (permit: Omit<AttendanceRecord, 'id' | 'userName' | 'userClass'>): Promise<boolean> => {
-    return new Promise(async (resolve) => {
-        MOCK_USERS = loadInitialUsers();
-        MOCK_ATTENDANCE = loadInitialAttendance();
         const user = Object.values(MOCK_USERS).find(u => u.uid === permit.userId);
-        
         if (user) {
             const newRecord: AttendanceRecord = {
                 id: Math.random().toString(36).substr(2, 9),
@@ -388,98 +367,213 @@ export const api = {
                 MOCK_ATTENDANCE.unshift(newRecord);
             }
 
-            // Update XP & Level immediately
             const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === permit.userId);
              if (userKey) {
-                 const { xp, level } = calculateUserXPAndLevel(permit.userId, MOCK_ATTENDANCE);
-                 MOCK_USERS[userKey].xp = xp;
-                 MOCK_USERS[userKey].level = level;
+                 let xpAdd = ['Sakit','Izin'].includes(permit.status) ? 5 : 0;
+                 if (MOCK_USERS[userKey].isPremium) xpAdd *= 2;
+                 MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + xpAdd;
+                 MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
              }
-
             saveChanges();
+            return true;
         }
-        setTimeout(() => resolve(true), 800);
-    });
+        return false;
   },
 
-  addStudent: async (studentData: { name: string, nis: string, class: string }): Promise<boolean> => {
-      return new Promise((resolve) => {
-        MOCK_USERS = loadInitialUsers();
-        if (MOCK_USERS[studentData.nis]) {
-             resolve(false);
-             return;
-        }
+  addStudent: async (studentData: { name: string, nis: string, class: string, isPremium?: boolean }): Promise<boolean> => {
+        if (MOCK_USERS[studentData.nis]) return false;
 
         const newId = Math.random().toString(36).substr(2, 9);
-        const newUser: User = {
+        MOCK_USERS[studentData.nis] = {
             uid: newId,
             nis: studentData.nis,
             name: studentData.name,
             class: studentData.class,
             role: 'student',
-            level: 1, // Start Level 1
-            xp: 0,
+            level: 1, xp: 0, spentXp: 0,
+            theme: 'blue', border: 'none', inventory: ['theme_default', 'border_none'],
+            isPremium: studentData.isPremium || false,
             photo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentData.name)}`
         };
-        
-        let deletedIDs: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED) || '[]');
-        deletedIDs = deletedIDs.filter(id => id !== studentData.nis);
-        localStorage.setItem(STORAGE_KEY_DELETED, JSON.stringify(deletedIDs));
-
-        MOCK_USERS[studentData.nis] = newUser;
         saveChanges();
-        resolve(true);
-      });
+        return true;
   },
 
-  updateStudent: async (uid: string, data: { name: string, class: string, nis: string }): Promise<boolean> => {
-      return new Promise((resolve) => {
-          MOCK_USERS = loadInitialUsers();
-          const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
-          
-          if (!userKey) {
-              resolve(false);
-              return;
-          }
-
-          const oldUser = MOCK_USERS[userKey];
-          
-          if (oldUser.nis !== data.nis) {
-              if (MOCK_USERS[data.nis]) {
-                  resolve(false); 
-                  return;
-              }
-              delete MOCK_USERS[userKey]; 
-              MOCK_USERS[data.nis] = { ...oldUser, ...data, nis: data.nis };
-          } else {
-              MOCK_USERS[userKey] = { ...oldUser, ...data };
-          }
-          
-          saveChanges();
-          resolve(true);
-      });
+  updateStudent: async (uid: string, data: { name: string, class: string, nis: string, isPremium?: boolean }): Promise<boolean> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (!userKey) return false;
+      
+      const oldUser = MOCK_USERS[userKey];
+      if (oldUser.nis !== data.nis) {
+          if (MOCK_USERS[data.nis]) return false;
+          delete MOCK_USERS[userKey]; 
+          MOCK_USERS[data.nis] = { ...oldUser, ...data, nis: data.nis };
+      } else {
+          MOCK_USERS[userKey] = { ...oldUser, ...data };
+      }
+      saveChanges();
+      return true;
   },
 
   deleteStudent: async (uid: string): Promise<boolean> => {
-      return new Promise((resolve) => {
-          MOCK_USERS = loadInitialUsers();
-          const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
-          
-          if (userKey) {
-              const userNIS = MOCK_USERS[userKey].nis;
-              const deletedIDs: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED) || '[]');
-              if (!deletedIDs.includes(userNIS)) {
-                  deletedIDs.push(userNIS);
-                  localStorage.setItem(STORAGE_KEY_DELETED, JSON.stringify(deletedIDs));
-              }
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (userKey) {
+          const deletedIDs: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED) || '[]');
+          deletedIDs.push(MOCK_USERS[userKey].nis);
+          localStorage.setItem(STORAGE_KEY_DELETED, JSON.stringify(deletedIDs));
+          delete MOCK_USERS[userKey];
+          saveChanges();
+          return true;
+      }
+      return false;
+  },
+  
+  updateStudentXP: async (uid: string, amount: number): Promise<boolean> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (userKey) {
+          MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + amount;
+          MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
+          saveChanges();
+          return true;
+      }
+      return false;
+  },
 
-              delete MOCK_USERS[userKey];
-              saveChanges();
+  deleteAttendanceRecord: async (recordId: string, userId: string): Promise<boolean> => {
+       const idx = MOCK_ATTENDANCE.findIndex(r => r.id === recordId);
+       if (idx !== -1) {
+           MOCK_ATTENDANCE.splice(idx, 1);
+           saveChanges(); // Simple remove, no XP deduction logic to keep simple
+           return true;
+       }
+       return false;
+  },
+  
+  addManualAttendance: async (record: Omit<AttendanceRecord, 'id' | 'userName' | 'userClass'>): Promise<boolean> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === record.userId);
+      if (!userKey) return false;
+      const user = MOCK_USERS[userKey];
+
+      const newRecord: AttendanceRecord = {
+          id: `manual-${Date.now()}`,
+          userName: user.name,
+          userClass: user.class || '',
+          ...record,
+          isVerified: true
+      };
+      
+      MOCK_ATTENDANCE.unshift(newRecord);
+      
+      let add = record.status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(record.status) ? 5 : 0);
+      if (user.isPremium) add *= 2;
+
+      user.xp = (user.xp || 0) + add;
+      user.level = calculateLevel(user.xp || 0);
+      saveChanges();
+      return true;
+  },
+  
+  // ===============================================
+  // OPTIMIZED MARK BULK ALPHA
+  // ===============================================
+  markBulkAlpha: async (userIds: string[], date: string, skipNetwork: boolean = false): Promise<number> => {
+      // 1. Create Lookup Map for Speed (O(N))
+      const uidMap = new Map<string, User>();
+      Object.values(MOCK_USERS).forEach(u => uidMap.set(u.uid, u));
+
+      let count = 0;
+      const newRecords: AttendanceRecord[] = [];
+      const pendingSubmissions: { name: string, status: 'A' }[] = [];
+
+      userIds.forEach(uid => {
+          const user = uidMap.get(uid);
+          if (user) {
+              const existsLocal = MOCK_ATTENDANCE.some(r => r.userId === uid && r.date === date);
+              const existsSheet = IN_MEMORY_SHEET_DATA.some(r => r.userId === uid && r.date === date);
               
-              resolve(true);
-          } else {
-              resolve(false);
+              if (!existsLocal && !existsSheet) {
+                  // 1. Create Local Record (Instant Feedback)
+                  newRecords.push({
+                      id: `alpha-${uid}-${date}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                      userId: uid,
+                      userName: user.name,
+                      userClass: user.class || '',
+                      status: 'Alpa',
+                      date: date,
+                      time: '-',
+                      details: 'Tanpa Keterangan (Sistem)',
+                      isVerified: true
+                  });
+                  
+                  // 2. Queue for throttled submission
+                  pendingSubmissions.push({ name: user.name, status: 'A' });
+                  count++;
+              }
           }
       });
+
+      // 2. Batch Push & Save Local Data
+      if (newRecords.length > 0) {
+          MOCK_ATTENDANCE.unshift(...newRecords);
+          saveChanges();
+          console.log(`[Batch] Sukses menyimpan ${newRecords.length} record Alpa secara lokal.`);
+      }
+
+      // 3. IF skipNetwork is TRUE, we STOP here. 
+      // This is because the UI (TeacherLayout) will handle the network calls one by one for visual effect.
+      if (skipNetwork) {
+          return count;
+      }
+
+      // 3. THROTTLED QUEUE SUBMISSION (FALLBACK IF NOT SKIPPED)
+      const processQueue = async () => {
+          const CHUNK_SIZE = 3; 
+          for (let i = 0; i < pendingSubmissions.length; i += CHUNK_SIZE) {
+              const chunk = pendingSubmissions.slice(i, i + CHUNK_SIZE);
+              await Promise.all(chunk.map(item => submitToGoogleFormBackground(item.name, item.status as any)));
+              if (i + CHUNK_SIZE < pendingSubmissions.length) {
+                  await new Promise(resolve => setTimeout(resolve, 500)); 
+              }
+          }
+      };
+
+      processQueue();
+
+      return count;
+  },
+
+  buyItem: async (uid: string, itemId: string): Promise<{success: boolean, message: string}> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (!userKey) return {success: false, message: 'User not found'};
+
+      const user = MOCK_USERS[userKey];
+      const item = SHOP_ITEMS.find(i => i.id === itemId);
+      if (!item) return {success: false, message: 'Item not found'};
+
+      if (item.reqPremium && !user.isPremium) return {success: false, message: 'Item ini khusus akun Premium!'};
+
+      const currentBalance = (user.xp || 0) - (user.spentXp || 0);
+      if (currentBalance < item.price) return {success: false, message: 'XP tidak cukup'};
+
+      if (user.inventory?.includes(itemId)) return {success: false, message: 'Item sudah dimiliki'};
+
+      user.spentXp = (user.spentXp || 0) + item.price;
+      user.inventory = [...(user.inventory || []), itemId];
+      saveChanges();
+      return {success: true, message: 'Item berhasil dibeli!'};
+  },
+
+  equipItem: async (uid: string, itemId: string, type: 'theme' | 'border'): Promise<{success: boolean, message: string}> => {
+      const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
+      if (!userKey) return {success: false, message: 'User not found'};
+
+      const user = MOCK_USERS[userKey];
+      if (!user.inventory?.includes(itemId)) return {success: false, message: 'Anda belum memiliki item ini'};
+
+      if (type === 'theme') user.theme = itemId === 'theme_default' ? 'blue' : SHOP_ITEMS.find(i => i.id === itemId)?.value;
+      if (type === 'border') user.border = itemId === 'border_none' ? 'none' : SHOP_ITEMS.find(i => i.id === itemId)?.value;
+
+      saveChanges();
+      return {success: true, message: `Berhasil menggunakan item`};
   }
 };

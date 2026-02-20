@@ -7,6 +7,7 @@ const HistoryView: React.FC = () => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date()); // DEFAULT REAL TIME
   const [selectedDateDetails, setSelectedDateDetails] = useState<any | null>(null);
+  const isPremium = user?.isPremium;
 
   const history = MOCK_ATTENDANCE.filter(a => a.userId === user?.uid);
 
@@ -42,8 +43,8 @@ const HistoryView: React.FC = () => {
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const record = history.find(h => h.date === dateStr);
         
-        let bgColor = 'bg-slate-50 text-slate-700';
-        let borderColor = 'border-slate-100';
+        let bgColor = isPremium ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-700';
+        let borderColor = isPremium ? 'border-slate-700' : 'border-slate-100';
 
         if (record) {
             switch(record.status) {
@@ -70,7 +71,7 @@ const HistoryView: React.FC = () => {
             <div 
                 key={day} 
                 onClick={() => record ? setSelectedDateDetails(record) : null}
-                className={`h-12 w-10 md:w-full md:h-16 mx-auto rounded-xl flex items-center justify-center text-sm md:text-base font-bold cursor-pointer transition-all border ${borderColor} ${record ? 'shadow-lg hover:scale-105 z-10' : 'hover:bg-slate-100'} ${bgColor}`}
+                className={`h-12 w-10 md:w-full md:h-16 mx-auto rounded-xl flex items-center justify-center text-sm md:text-base font-bold cursor-pointer transition-all border ${borderColor} ${record ? 'shadow-lg hover:scale-105 z-10' : (isPremium ? 'hover:bg-slate-700' : 'hover:bg-slate-100')} ${bgColor}`}
             >
                 {day}
             </div>
@@ -80,19 +81,19 @@ const HistoryView: React.FC = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 min-h-full max-w-5xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6">Kalender Kehadiran</h1>
+    <div className={`p-6 md:p-10 min-h-full max-w-5xl mx-auto ${isPremium ? 'text-white' : ''}`}>
+      <h1 className={`text-2xl md:text-3xl font-bold mb-6 ${isPremium ? 'text-white' : 'text-slate-900'}`}>Kalender Kehadiran</h1>
 
-      <div className="bg-white rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 mb-6">
+      <div className={`rounded-3xl p-6 md:p-10 shadow-xl mb-6 border ${isPremium ? 'bg-slate-900 border-slate-800 shadow-black/50' : 'bg-white border-slate-100 shadow-slate-200/50'}`}>
         <div className="flex justify-between items-center mb-8">
-            <button onClick={prevMonth} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
-                <ChevronLeft className="w-6 h-6 text-slate-600" />
+            <button onClick={prevMonth} className={`p-2 rounded-full transition-colors ${isPremium ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-50 text-slate-600'}`}>
+                <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+            <h2 className={`text-xl md:text-2xl font-bold ${isPremium ? 'text-white' : 'text-slate-900'}`}>
                 {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
             </h2>
-            <button onClick={nextMonth} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
-                <ChevronRight className="w-6 h-6 text-slate-600" />
+            <button onClick={nextMonth} className={`p-2 rounded-full transition-colors ${isPremium ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-50 text-slate-600'}`}>
+                <ChevronRight className="w-6 h-6" />
             </button>
         </div>
 
@@ -120,12 +121,12 @@ const HistoryView: React.FC = () => {
       {/* Detail Modal */}
       {selectedDateDetails && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-in fade-in duration-200">
-              <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl p-1 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-hidden">
+              <div className={`w-full md:max-w-md rounded-t-3xl md:rounded-3xl p-1 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-hidden ${isPremium ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
                    <div className="p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-900">Detail Kehadiran</h3>
-                            <button onClick={() => setSelectedDateDetails(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
-                                <X className="w-5 h-5 text-slate-500" />
+                            <h3 className={`text-xl font-bold ${isPremium ? 'text-white' : 'text-slate-900'}`}>Detail Kehadiran</h3>
+                            <button onClick={() => setSelectedDateDetails(null)} className={`p-2 rounded-full transition-colors ${isPremium ? 'bg-slate-800 hover:bg-slate-700 text-slate-400' : 'bg-slate-50 hover:bg-slate-100 text-slate-500'}`}>
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                         
@@ -156,28 +157,28 @@ const HistoryView: React.FC = () => {
 
                         {/* Details Grid */}
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className={`flex items-center justify-between p-5 rounded-2xl border ${isPremium ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-primary-600">
+                                    <div className={`p-2.5 rounded-xl shadow-sm border ${isPremium ? 'bg-slate-900 border-slate-700 text-amber-400' : 'bg-white border-slate-100 text-primary-600'}`}>
                                         <Clock className="w-5 h-5" />
                                     </div>
                                     <div className="text-left">
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Waktu Masuk</p>
-                                        <p className="font-bold text-slate-900 text-lg">
+                                        <p className={`font-bold text-lg ${isPremium ? 'text-white' : 'text-slate-900'}`}>
                                             {selectedDateDetails.time} <span className="text-xs text-slate-400 font-medium">WIB</span>
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className={`p-5 rounded-2xl border ${isPremium ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                                 <div className="flex items-start gap-3">
-                                    <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-primary-600">
+                                    <div className={`p-2.5 rounded-xl shadow-sm border ${isPremium ? 'bg-slate-900 border-slate-700 text-amber-400' : 'bg-white border-slate-100 text-primary-600'}`}>
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div className="text-left flex-1">
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Keterangan</p>
-                                        <p className="font-bold text-slate-900 leading-relaxed text-sm">
+                                        <p className={`font-bold leading-relaxed text-sm ${isPremium ? 'text-white' : 'text-slate-900'}`}>
                                             {selectedDateDetails.details || 'Tidak ada keterangan tambahan.'}
                                         </p>
                                     </div>
@@ -185,7 +186,7 @@ const HistoryView: React.FC = () => {
                             </div>
                         </div>
                         
-                        <button onClick={() => setSelectedDateDetails(null)} className="w-full mt-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-colors shadow-xl shadow-slate-200">
+                        <button onClick={() => setSelectedDateDetails(null)} className={`w-full mt-8 py-4 font-bold rounded-2xl transition-colors shadow-xl ${isPremium ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}>
                             Tutup
                         </button>
                    </div>

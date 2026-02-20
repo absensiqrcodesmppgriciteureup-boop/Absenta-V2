@@ -38,28 +38,41 @@ export const CLASS_SHEET_URLS: Record<string, string> = {
 };
 
 // ============================================================================
-// KONFIGURASI FORMULIR ABSENSI (BACKGROUND SUBMISSION)
+// KONFIGURASI FORMULIR ABSENSI (LINK SYSTEM)
 // ============================================================================
 const ATTENDANCE_FORM_ID = '1FAIpQLSddVTbGsgAcawIbAyctWbRptSqekCsuOiv9ImJ8Injp7kMovQ';
 const ENTRY_NAME = 'entry.1390122158';
 const ENTRY_STATUS = 'entry.2112276150';
 
 export const submitToGoogleFormBackground = async (name: string, status: 'H' | 'S' | 'I' | 'A') => {
-    const formUrl = `https://docs.google.com/forms/d/e/${ATTENDANCE_FORM_ID}/formResponse`;
-    const formData = new FormData();
-    formData.append(ENTRY_NAME, name);
-    formData.append(ENTRY_STATUS, status);
+    // METODE POST (Lebih stabil untuk submission)
+    const baseUrl = `https://docs.google.com/forms/d/e/${ATTENDANCE_FORM_ID}/formResponse`;
+    
+    // Mapping Code to Full Word (Google Form Validation Fix)
+    let finalStatus: string = status;
+    if (status === 'H') finalStatus = 'Hadir';
+    if (status === 'S') finalStatus = 'Sakit';
+    if (status === 'I') finalStatus = 'Izin';
+    if (status === 'A') finalStatus = 'Alpa';
+
+    const params = new URLSearchParams();
+    params.append(ENTRY_NAME, name);
+    params.append(ENTRY_STATUS, finalStatus);
+    params.append('submit', 'Submit');
 
     try {
-        await fetch(formUrl, {
+        await fetch(baseUrl, {
             method: 'POST',
-            mode: 'no-cors',
-            body: formData
+            mode: 'no-cors', // CRITICAL: Mencegah error CORS blokir request
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: params
         });
-        console.log(`[Background Sync] Sukses mengirim data ${name} - ${status} ke Google Form.`);
+        // Karena no-cors, kita tidak bisa cek response.ok, anggap sukses jika tidak throw error network
         return true;
     } catch (error) {
-        console.error("[Background Sync] Gagal mengirim ke Google Form:", error);
+        console.error("[Link System] Gagal menembak link:", error);
         return false;
     }
 };
