@@ -45,7 +45,7 @@ const ENTRY_NAME = 'entry.1390122158';
 const ENTRY_STATUS = 'entry.2112276150';
 
 export const submitToGoogleFormBackground = async (name: string, status: 'H' | 'S' | 'I' | 'A') => {
-    // METODE POST (Lebih stabil untuk submission)
+    // METODE GET (Sesuai request user dengan link spesifik)
     const baseUrl = `https://docs.google.com/forms/d/e/${ATTENDANCE_FORM_ID}/formResponse`;
     
     // Mapping Code to Full Word (Google Form Validation Fix)
@@ -56,18 +56,18 @@ export const submitToGoogleFormBackground = async (name: string, status: 'H' | '
     if (status === 'A') finalStatus = 'A'; // Sesuai request user: entry.2112276150=A
 
     const params = new URLSearchParams();
+    params.append('usp', 'pp_url');
     params.append(ENTRY_NAME, name);
     params.append(ENTRY_STATUS, finalStatus);
     params.append('submit', 'Submit');
 
     try {
-        await fetch(baseUrl, {
-            method: 'POST',
+        await fetch(`${baseUrl}?${params.toString()}`, {
+            method: 'GET',
             mode: 'no-cors', // CRITICAL: Mencegah error CORS blokir request
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: params
+            }
         });
         // Karena no-cors, kita tidak bisa cek response.ok, anggap sukses jika tidak throw error network
         return true;
