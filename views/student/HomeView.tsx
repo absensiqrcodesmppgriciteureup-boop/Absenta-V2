@@ -24,7 +24,6 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
 
   // NET XP CALCULATION
   const netXp = (user?.xp || 0) - (user?.spentXp || 0);
-  const isPremium = user?.isPremium;
 
   // Theme Logic for Accents
   const activeTheme = user?.theme || 'blue';
@@ -115,7 +114,7 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
   const renderStatusCard = () => {
     if (isLoadingStatus) {
         return {
-            bg: isPremium ? 'bg-black/40 border-white/10' : 'bg-slate-900/40 backdrop-blur-md border-white/10',
+            bg: 'bg-slate-900/40 backdrop-blur-md border-white/10',
             icon: <Loader2 className="w-5 h-5 text-white/50 animate-spin" />,
             title: 'Memuat Status...',
             titleColor: 'text-white/70',
@@ -126,7 +125,7 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
 
     if (todayStatus === 'Hadir') {
         return {
-            bg: isPremium ? 'bg-emerald-950/50 border-emerald-500/30' : 'bg-emerald-600/20 backdrop-blur-md border-emerald-500/30',
+            bg: 'bg-emerald-600/20 backdrop-blur-md border-emerald-500/30',
             icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
             title: 'Hadir Tepat Waktu',
             titleColor: 'text-emerald-100',
@@ -136,7 +135,7 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
     }
     if (todayStatus === 'Sakit' || todayStatus === 'Izin') {
         return {
-            bg: isPremium ? 'bg-blue-950/50 border-blue-500/30' : 'bg-blue-600/20 backdrop-blur-md border-blue-500/30',
+            bg: 'bg-blue-600/20 backdrop-blur-md border-blue-500/30',
             icon: <Info className="w-5 h-5 text-blue-400" />,
             title: `Status: ${todayStatus}`,
             titleColor: 'text-blue-100',
@@ -145,8 +144,8 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
         };
     }
     if (todayStatus === 'Alpa') {
-         return {
-            bg: isPremium ? 'bg-rose-950/50 border-rose-500/30' : 'bg-rose-600/20 backdrop-blur-md border-rose-500/30',
+        return {
+            bg: 'bg-rose-600/20 backdrop-blur-md border-rose-500/30',
             icon: <XCircle className="w-5 h-5 text-rose-400" />,
             title: 'Alpa / Tanpa Keterangan',
             titleColor: 'text-rose-100',
@@ -155,8 +154,8 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
         };
     }
     if (todayStatus === 'Pending') {
-         return {
-            bg: isPremium ? 'bg-slate-800/50 border-slate-500/30' : 'bg-slate-700/60 backdrop-blur-md border-slate-500/30',
+        return {
+            bg: 'bg-slate-700/60 backdrop-blur-md border-slate-500/30',
             icon: <Timer className="w-5 h-5 text-slate-300" />,
             title: 'Menunggu Verifikasi',
             titleColor: 'text-slate-100',
@@ -166,7 +165,7 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
     }
     // Default: Belum Absen
     return {
-        bg: isPremium ? 'bg-amber-950/50 border-amber-500/30' : 'bg-amber-600/20 backdrop-blur-md border-amber-500/30',
+        bg: 'bg-amber-600/20 backdrop-blur-md border-amber-500/30',
         icon: <AlertCircle className="w-5 h-5 text-amber-400 animate-pulse" />,
         title: 'Belum Absen Hari Ini',
         titleColor: 'text-amber-100',
@@ -178,17 +177,12 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
   const statusConfig = renderStatusCard();
 
   return (
-    <div className={`p-6 md:p-10 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto min-h-full ${isPremium ? 'bg-slate-950 text-white' : ''}`}>
+    <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto min-h-full">
       {/* Header with Greeting */}
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-2 mb-1">
-              {isPremium && (
-                  <span className="bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 text-amber-950 text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow-lg shadow-amber-500/20 tracking-wider uppercase">
-                      <Crown className="w-3 h-3" fill="currentColor" /> Premium Member
-                  </span>
-              )}
-              {!isPremium && <p className="text-slate-500 font-bold text-sm tracking-wide uppercase">Student Dashboard</p>}
+              <p className="text-slate-500 font-bold text-sm tracking-wide uppercase">Student Dashboard</p>
           </div>
           <div className="flex items-center gap-4">
              {/* Profile Pic with Custom Border */}
@@ -199,31 +193,26 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
                     size="md" 
                     level={user?.level}
                  />
-                 {isPremium && (
-                     <div className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-300 to-yellow-600 text-white p-1 rounded-full border-2 border-slate-900 shadow-xl z-10 animate-pulse">
-                         <Gem className="w-3 h-3" fill="white" />
-                     </div>
-                 )}
              </div>
              <div>
-                <h1 className={`text-2xl md:text-4xl font-black tracking-tight ${isPremium ? 'bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400' : 'text-slate-900'}`}>
-                    Halo, <span className={isPremium ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]' : themeTextClass}>{user?.name?.split(' ')[0]}</span>!
+                <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900">
+                    Halo, <span className={themeTextClass}>{user?.name?.split(' ')[0]}</span>!
                 </h1>
-                <p className={`${isPremium ? 'text-slate-400' : 'text-slate-400'} text-xs font-bold uppercase tracking-wider mt-1`}>
-                    Level {user?.level} {isPremium ? '• VIP Scholar' : 'Scholar'}
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">
+                    Level {user?.level} Scholar
                 </p>
              </div>
           </div>
         </div>
         
         {/* XP CARD */}
-        <div className={`hidden md:flex pl-2 pr-4 py-2 rounded-2xl items-center gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isPremium ? 'bg-white/5 border border-white/10 backdrop-blur-md' : 'bg-white border border-slate-200'}`}>
-           <div className={`p-2 rounded-xl text-white shadow-lg ${isPremium ? 'bg-gradient-to-br from-amber-400 to-yellow-600 shadow-amber-500/30' : 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-200'}`}>
+        <div className="hidden md:flex pl-2 pr-4 py-2 rounded-2xl items-center gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-white border border-slate-200">
+           <div className="p-2 rounded-xl text-white shadow-lg bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-200">
              <Trophy className="w-5 h-5" />
            </div>
            <div className="flex flex-col items-start">
-               <span className={`text-xs font-bold ${isPremium ? 'text-slate-400' : 'text-slate-400'}`}>Sisa Poin</span>
-               <span className={`text-lg font-black leading-none ${isPremium ? 'text-white' : 'text-slate-800'}`}>{netXp} XP</span>
+               <span className="text-xs font-bold text-slate-400">Sisa Poin</span>
+               <span className="text-lg font-black leading-none text-slate-800">{netXp} XP</span>
            </div>
         </div>
       </div>
@@ -232,34 +221,34 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
         
         {/* Left Column (Desktop: 2/3) */}
         <div className="lg:col-span-2 space-y-8">
-             {/* Enhanced Time Card */}
-            <div className={`relative w-full overflow-hidden rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl group ${isPremium ? 'bg-slate-900 border border-amber-500/20' : 'bg-slate-900 shadow-primary-900/20'}`}>
-                {/* Animated Background Mesh */}
-                <div className={`absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-700 ${isPremium ? 'bg-[radial-gradient(circle_at_50%_120%,#fbbf24,transparent_70%)]' : 'bg-[radial-gradient(circle_at_50%_120%,#3b82f6,transparent_70%)]'}`}></div>
-                <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -mr-20 -mt-20 animate-pulse ${isPremium ? 'bg-amber-500/10' : 'bg-indigo-500/20'}`}></div>
+            {/* Enhanced Time Card */}
+            <div className="relative w-full overflow-hidden rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl group bg-slate-900 shadow-primary-900/20 card-hover">
+                {/* Animated Background Mesh (Recipe 7: Atmospheric) */}
+                <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-700 bg-[radial-gradient(circle_at_50%_30%,#3b82f6,transparent_60%),radial-gradient(circle_at_10%_80%,#6366f1,transparent_50%)]"></div>
+                <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-[100px] -mr-32 -mt-32 animate-pulse bg-indigo-500/20"></div>
                 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="text-center md:text-left">
-                        <div className="flex items-baseline justify-center md:justify-start gap-1 font-sans">
-                            <h2 className="text-6xl md:text-8xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-300 drop-shadow-sm">
+                        <div className="flex items-baseline justify-center md:justify-start gap-2 font-sans">
+                            <h2 className="text-7xl md:text-9xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 drop-shadow-2xl">
                                 {formatTime(currentTime)}
                             </h2>
-                            <span className="text-xl md:text-2xl font-bold text-slate-400 w-8">{formatSeconds(currentTime)}</span>
+                            <span className="text-2xl md:text-3xl font-bold text-slate-500 w-12 tabular-nums">{formatSeconds(currentTime)}</span>
                         </div>
-                        <p className={`text-lg font-medium tracking-wide mt-2 flex items-center justify-center md:justify-start gap-2 ${isPremium ? 'text-amber-100/70' : 'text-indigo-200'}`}>
-                            <CalendarDays className="w-5 h-5" /> {formatDate(currentTime)}
+                        <p className="text-xl font-medium tracking-wide mt-4 flex items-center justify-center md:justify-start gap-3 text-indigo-200/80">
+                            <CalendarDays className="w-6 h-6" /> {formatDate(currentTime)}
                         </p>
                     </div>
 
-                    {/* DYNAMIC STATUS CARD */}
-                    <div className={`p-6 rounded-2xl border max-w-xs transition-all duration-500 ${statusConfig.bg}`}>
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-white/10 rounded-lg">
+                    {/* DYNAMIC STATUS CARD (Glassmorphism) */}
+                    <div className={`p-8 rounded-[2rem] border transition-all duration-500 glass-dark max-w-sm ${statusConfig.bg.replace('bg-', 'bg-opacity-20 bg-')}`}>
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-white/10 rounded-2xl">
                                 {statusConfig.icon}
                             </div>
-                            <span className={`font-bold text-sm ${statusConfig.titleColor}`}>{statusConfig.title}</span>
+                            <span className={`font-black text-lg tracking-tight ${statusConfig.titleColor}`}>{statusConfig.title}</span>
                         </div>
-                        <p className={`text-xs leading-relaxed ${statusConfig.descColor}`}>
+                        <p className={`text-sm leading-relaxed font-medium ${statusConfig.descColor}`}>
                             {statusConfig.desc}
                         </p>
                     </div>
@@ -267,17 +256,17 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
             </div>
 
              {/* Timeline Schedule */}
-            <div className={`rounded-3xl p-6 md:p-8 border shadow-xl ${isPremium ? 'bg-slate-900 border-slate-800 shadow-black/50' : 'bg-white border-slate-100 shadow-slate-200/50'}`}>
+            <div className="rounded-3xl p-6 md:p-8 border shadow-xl bg-white border-slate-100 shadow-slate-200/50">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className={`text-xl font-bold flex items-center gap-2 ${isPremium ? 'text-white' : 'text-slate-900'}`}>
-                        <BookOpen className={`w-6 h-6 ${isPremium ? 'text-amber-500' : themeTextClass}`} />
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                        <BookOpen className={`w-6 h-6 ${themeTextClass}`} />
                         Timeline Jadwal
                     </h3>
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${isPremium ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'}`}>Hari Ini</span>
+                    <span className="px-3 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-500">Hari Ini</span>
                 </div>
                 <div className="space-y-0 relative">
                     {/* Vertical Line */}
-                    <div className={`absolute left-8 top-6 bottom-6 w-0.5 -translate-x-1/2 ${isPremium ? 'bg-slate-800' : 'bg-slate-100'}`}></div>
+                    <div className="absolute left-8 top-6 bottom-6 w-0.5 -translate-x-1/2 bg-slate-100"></div>
 
                     {MOCK_SCHEDULE.map((item, idx) => {
                         const now = new Date();
@@ -292,35 +281,35 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
                             <div key={item.id} className="relative pl-20 py-3 group">
                                 <div className={`absolute left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-[3px] z-10 transition-all duration-300 flex items-center justify-center
                                     ${active 
-                                        ? `${isPremium ? 'bg-amber-500 border-amber-300 ring-amber-900' : themeBgClass} bg-white ring-4 ${isPremium ? 'ring-slate-800' : 'ring-slate-200'} scale-125` 
+                                        ? `${themeBgClass} bg-white ring-4 ring-slate-200 scale-125` 
                                         : isPast 
                                             ? 'border-emerald-500 bg-emerald-500 scale-100' 
-                                            : isPremium ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'
+                                            : 'border-slate-200 bg-slate-50'
                                     }`}>
                                     {isPast && <CheckCircle2 className="w-2.5 h-2.5 text-white" strokeWidth={4} />}
                                 </div>
                                 
                                 <div className={`p-4 rounded-2xl border transition-all duration-300 
                                     ${active 
-                                        ? isPremium ? 'bg-slate-800 border-amber-500/50 translate-x-2 shadow-lg shadow-amber-900/10' : 'bg-slate-50 border-slate-300 translate-x-2 shadow-sm' 
+                                        ? 'bg-slate-50 border-slate-300 translate-x-2 shadow-sm' 
                                         : isPast 
-                                            ? isPremium ? 'bg-slate-900/50 border-slate-800 opacity-60 hover:opacity-100' : 'bg-slate-50/50 border-slate-100 opacity-70 hover:opacity-100' 
-                                            : isPremium ? 'bg-slate-900 border-slate-800 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-slate-300'
+                                            ? 'bg-slate-50/50 border-slate-100 opacity-70 hover:opacity-100' 
+                                            : 'bg-white border-slate-100 hover:border-slate-300'
                                     }`}>
-                                    <div className="flex justify-between items-start">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                                         <div>
-                                            <h4 className={`font-bold text-lg ${active ? (isPremium ? 'text-amber-400' : themeTextClass) : isPast ? 'text-slate-500 line-through decoration-slate-600' : (isPremium ? 'text-white' : 'text-slate-800')}`}>{item.subject}</h4>
-                                            <p className={`text-sm font-medium mt-1 flex items-center gap-1 ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            <h4 className={`font-bold text-lg leading-snug ${active ? themeTextClass : isPast ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-800'}`}>{item.subject}</h4>
+                                            <p className="text-sm font-medium mt-1 flex items-center gap-1 text-slate-500">
                                                 <Clock className="w-3.5 h-3.5" /> {item.time}
                                             </p>
                                         </div>
-                                        <div className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm ${isPremium ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border border-slate-100 text-slate-500'}`}>
+                                        <div className="self-start sm:self-auto px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm bg-white border border-slate-100 text-slate-500 whitespace-nowrap">
                                             <MapPin className="w-3 h-3" /> {item.room}
                                         </div>
                                     </div>
                                     {active && (
-                                        <div className={`mt-3 inline-flex items-center gap-2 text-xs font-bold ${isPremium ? 'text-amber-400' : themeTextClass} animate-pulse`}>
-                                            <span className={`w-2 h-2 rounded-full ${isPremium ? 'bg-amber-500' : themeBgClass}`}></span> Sedang Berlangsung
+                                        <div className={`mt-3 inline-flex items-center gap-2 text-xs font-bold ${themeTextClass} animate-pulse`}>
+                                            <span className={`w-2 h-2 rounded-full ${themeBgClass}`}></span> Sedang Berlangsung
                                         </div>
                                     )}
                                 </div>
@@ -333,65 +322,49 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
 
         {/* Right Column (Desktop: 1/3) */}
         <div className="lg:col-span-1 space-y-8">
-            {/* Stats Grid */}
+            {/* Stats Grid (Bento Style) */}
             <div>
-                <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${isPremium ? 'text-white' : 'text-slate-900'}`}>
-                    <CalendarDays className={`w-5 h-5 ${isPremium ? 'text-amber-500' : themeTextClass}`} />
-                    Statistik Bulan Ini
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
+                    <CalendarDays className={`w-5 h-5 ${themeTextClass}`} />
+                    Statistik & Level
                 </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-                    <div className={`p-6 rounded-3xl border shadow-sm flex flex-col justify-between hover:shadow-lg transition-all group ${isPremium ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${isPremium ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 ' + themeTextClass}`}>
-                            <Clock className="w-6 h-6" />
+                <div className="grid grid-cols-1 gap-6">
+                    <div className="p-8 rounded-[2rem] border shadow-sm flex flex-col justify-between hover:shadow-xl transition-all group bg-white border-slate-100 card-hover">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform bg-blue-50 ${themeTextClass}`}>
+                            <Clock className="w-7 h-7" />
                         </div>
                         <div>
-                            <p className={`text-4xl font-black tracking-tight ${isPremium ? 'text-white' : 'text-slate-900'}`}>{attendancePercentage}<span className="text-lg text-slate-400 ml-1">%</span></p>
-                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-2">Kehadiran</p>
+                            <p className="text-5xl font-black tracking-tighter text-slate-900">{attendancePercentage}<span className="text-xl text-slate-400 ml-1">%</span></p>
+                            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-3">Kehadiran Bulan Ini</p>
                         </div>
                     </div>
-                    {/* LEVEL CARD - PREMIUM EDITION */}
-                    <div className={`p-6 rounded-3xl border shadow-sm flex flex-col justify-between hover:shadow-lg transition-all group relative overflow-hidden ${isPremium ? 'bg-gradient-to-br from-slate-900 to-slate-800 border-amber-500/30' : 'bg-white border-slate-100'}`}>
-                        {isPremium && (
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent"></div>
-                        )}
-                        
-                        {isPremium && (
-                            <div className="absolute top-0 right-0 p-4 opacity-20">
-                                <Crown className="w-24 h-24 text-amber-400" />
-                            </div>
-                        )}
-
+                    {/* LEVEL CARD */}
+                    <div className="p-8 rounded-[2rem] border shadow-sm flex flex-col justify-between hover:shadow-xl transition-all group relative overflow-hidden bg-white border-slate-100 card-hover">
                         <div className="relative z-10">
-                             <div className="flex justify-between items-start mb-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${isPremium ? 'bg-gradient-to-br from-amber-300 to-yellow-600 text-white shadow-lg shadow-amber-900/50' : 'bg-indigo-50 text-indigo-600'}`}>
-                                    {isPremium ? <Crown className="w-6 h-6" fill="currentColor" /> : <Star className="w-6 h-6" fill="currentColor" />}
+                             <div className="flex justify-between items-start mb-6">
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform bg-indigo-50 text-indigo-600">
+                                    <Star className="w-7 h-7" fill="currentColor" />
                                 </div>
                                 <div className="text-right">
-                                    <span className={`text-xs font-bold tracking-wider uppercase block ${isPremium ? 'text-amber-400' : 'text-indigo-400'}`}>Next Level</span>
-                                    <span className="text-lg font-black text-slate-400">-{levelProgress.needed} XP</span>
+                                    <span className="text-xs font-bold tracking-widest uppercase block text-indigo-400">Next Level</span>
+                                    <span className="text-xl font-black text-slate-400">-{levelProgress.needed} XP</span>
                                 </div>
                              </div>
                             <div>
-                                <p className={`text-4xl font-black tracking-tight ${isPremium ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500' : 'text-slate-900'}`}>{user?.level || 1}</p>
-                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">
-                                    {isPremium ? 'Premium Level' : 'Level Siswa'}
+                                <p className="text-5xl font-black tracking-tighter text-slate-900">Level {user?.level || 1}</p>
+                                <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-2">
+                                    Pangkat Siswa
                                 </p>
                                 
-                                {isPremium && (
-                                    <div className="mt-2 text-[10px] font-bold text-amber-400 flex items-center gap-1 animate-pulse">
-                                        <Zap className="w-3 h-3" fill="currentColor" /> 2x XP Booster Active
-                                    </div>
-                                )}
-
                                 {/* Progress Bar */}
-                                <div className={`mt-4 w-full h-2 rounded-full overflow-hidden ${isPremium ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                <div className="mt-6 w-full h-3 rounded-full overflow-hidden bg-indigo-50">
                                     <div 
-                                        className={`h-full transition-all duration-1000 ease-out ${isPremium ? 'bg-gradient-to-r from-amber-400 to-yellow-600 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-indigo-500'}`} 
+                                        className="h-full transition-all duration-1000 ease-out bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.5)]" 
                                         style={{ width: `${levelProgress.percent}%` }}
                                     ></div>
                                 </div>
-                                <div className="mt-1 flex justify-between text-[10px] font-bold text-slate-500">
-                                    <span>{user?.xp || 0} XP (Gross)</span>
+                                <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
+                                    <span>{user?.xp || 0} XP</span>
                                     <span>{levelProgress.nextXp} XP</span>
                                 </div>
                             </div>
@@ -403,13 +376,13 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
              {/* Enhanced Announcements */}
             <div className="pb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className={`text-lg font-bold flex items-center gap-2 ${isPremium ? 'text-white' : 'text-slate-900'}`}>
-                        <AlertCircle className={`w-5 h-5 ${isPremium ? 'text-amber-500' : themeTextClass}`} />
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900">
+                        <AlertCircle className={`w-5 h-5 ${themeTextClass}`} />
                         Pengumuman
                     </h3>
                 </div>
                 
-                <div className={`relative overflow-hidden rounded-3xl shadow-xl h-[280px] ${isPremium ? 'bg-slate-900 border border-slate-800 shadow-black/50' : 'bg-white border border-slate-100 shadow-slate-200/50'}`}>
+                <div className="relative overflow-hidden rounded-3xl shadow-xl h-[280px] bg-white border border-slate-100 shadow-slate-200/50">
                     <div 
                         className="flex transition-transform duration-500 ease-out h-full"
                         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -425,19 +398,19 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
                     >
                         {MOCK_ANNOUNCEMENTS.map((item) => (
                             <div key={item.id} className="w-full flex-shrink-0 p-8 flex flex-col relative">
-                                <div className={`absolute top-0 left-0 w-full h-1 ${isPremium ? 'bg-gradient-to-r from-amber-500 to-yellow-300' : themeBgClass}`}></div>
+                                <div className={`absolute top-0 left-0 w-full h-1 ${themeBgClass}`}></div>
                                 <span className={`self-start inline-block px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase mb-4 ${
                                     item.priority === 'high' 
-                                    ? (isPremium ? 'bg-rose-900/50 text-rose-400 border border-rose-800' : 'bg-rose-50 text-rose-600 border border-rose-100')
-                                    : (isPremium ? 'bg-blue-900/50 text-blue-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-100')
+                                    ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                                    : 'bg-blue-50 text-blue-600 border border-blue-100'
                                 }`}>
                                     {item.priority === 'high' ? 'Penting' : 'Info'}
                                 </span>
                                 
-                                <h4 className={`font-bold text-xl mb-3 leading-snug ${isPremium ? 'text-white' : 'text-slate-900'}`}>
+                                <h4 className="font-bold text-xl mb-3 leading-snug text-slate-900">
                                     {item.title}
                                 </h4>
-                                <p className={`text-sm leading-relaxed line-clamp-4 ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
+                                <p className="text-sm leading-relaxed line-clamp-4 text-slate-500">
                                     {item.content}
                                 </p>
 
@@ -455,7 +428,7 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
                             <button 
                                 key={idx}
                                 onClick={() => setCurrentSlide(idx)}
-                                className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx ? `w-6 ${isPremium ? 'bg-amber-500' : themeBgClass}` : 'w-1.5 bg-slate-600'}`}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx ? `w-6 ${themeBgClass}` : 'w-1.5 bg-slate-600'}`}
                             />
                         ))}
                     </div>

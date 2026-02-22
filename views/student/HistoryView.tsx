@@ -7,7 +7,6 @@ const HistoryView: React.FC = () => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date()); // DEFAULT REAL TIME
   const [selectedDateDetails, setSelectedDateDetails] = useState<any | null>(null);
-  const isPremium = user?.isPremium;
 
   const history = MOCK_ATTENDANCE.filter(a => a.userId === user?.uid);
 
@@ -43,8 +42,8 @@ const HistoryView: React.FC = () => {
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const record = history.find(h => h.date === dateStr);
         
-        let bgColor = isPremium ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-700';
-        let borderColor = isPremium ? 'border-slate-700' : 'border-slate-100';
+        let bgColor = 'bg-slate-50 text-slate-700';
+        let borderColor = 'border-slate-100';
 
         if (record) {
             switch(record.status) {
@@ -71,7 +70,7 @@ const HistoryView: React.FC = () => {
             <div 
                 key={day} 
                 onClick={() => record ? setSelectedDateDetails(record) : null}
-                className={`h-12 w-10 md:w-full md:h-16 mx-auto rounded-xl flex items-center justify-center text-sm md:text-base font-bold cursor-pointer transition-all border ${borderColor} ${record ? 'shadow-lg hover:scale-105 z-10' : (isPremium ? 'hover:bg-slate-700' : 'hover:bg-slate-100')} ${bgColor}`}
+                className={`h-12 w-10 md:w-full md:h-16 mx-auto rounded-xl flex items-center justify-center text-sm md:text-base font-bold cursor-pointer transition-all border ${borderColor} ${record ? 'shadow-lg hover:scale-105 z-10' : 'hover:bg-slate-100'} ${bgColor}`}
             >
                 {day}
             </div>
@@ -81,104 +80,114 @@ const HistoryView: React.FC = () => {
   };
 
   return (
-    <div className={`p-6 md:p-10 min-h-full max-w-5xl mx-auto ${isPremium ? 'text-white' : ''}`}>
-      <h1 className={`text-2xl md:text-3xl font-bold mb-6 ${isPremium ? 'text-white' : 'text-slate-900'}`}>Kalender Kehadiran</h1>
+    <div className="p-6 md:p-10 min-h-full max-w-5xl mx-auto animate-in fade-in duration-500">
+      <div className="flex items-center gap-4 mb-10">
+        <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100">
+            <Calendar className="w-7 h-7" />
+        </div>
+        <div>
+            <h1 className="text-3xl font-black tracking-tighter text-slate-900">Kalender Kehadiran</h1>
+            <p className="text-sm font-medium text-slate-500">Pantau riwayat absensi harian kamu.</p>
+        </div>
+      </div>
 
-      <div className={`rounded-3xl p-6 md:p-10 shadow-xl mb-6 border ${isPremium ? 'bg-slate-900 border-slate-800 shadow-black/50' : 'bg-white border-slate-100 shadow-slate-200/50'}`}>
-        <div className="flex justify-between items-center mb-8">
-            <button onClick={prevMonth} className={`p-2 rounded-full transition-colors ${isPremium ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-50 text-slate-600'}`}>
-                <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h2 className={`text-xl md:text-2xl font-bold ${isPremium ? 'text-white' : 'text-slate-900'}`}>
-                {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-            </h2>
-            <button onClick={nextMonth} className={`p-2 rounded-full transition-colors ${isPremium ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-50 text-slate-600'}`}>
-                <ChevronRight className="w-6 h-6" />
-            </button>
-        </div>
+      <div className="rounded-[2.5rem] p-6 md:p-10 shadow-2xl mb-10 border bg-white border-slate-100 shadow-slate-200/40 relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
+        
+        <div className="relative z-10">
+            <div className="flex justify-between items-center mb-10">
+                <button onClick={prevMonth} className="p-3 rounded-2xl transition-all hover:bg-slate-50 text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-100">
+                    <ChevronLeft className="w-7 h-7" />
+                </button>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                    {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                </h2>
+                <button onClick={nextMonth} className="p-3 rounded-2xl transition-all hover:bg-slate-50 text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-100">
+                    <ChevronRight className="w-7 h-7" />
+                </button>
+            </div>
 
-        <div className="grid grid-cols-7 gap-y-4 text-center mb-4 md:mb-6">
-            {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
-                <div key={d} className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">{d}</div>
-            ))}
-        </div>
-        
-        <div className="grid grid-cols-7 gap-y-3 gap-x-2 md:gap-4">
-            {renderCalendarDays()}
-        </div>
-        
-        <div className="mt-8 md:mt-12 flex justify-center gap-6 text-xs md:text-sm font-bold text-slate-500 flex-wrap">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-emerald-500"></div> Hadir</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-blue-500"></div> Sakit</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-amber-500"></div> Izin</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-rose-500"></div> Alpa</div>
+            <div className="grid grid-cols-7 gap-y-6 text-center mb-8">
+                {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
+                    <div key={d} className="text-xs font-black text-slate-300 uppercase tracking-[0.2em]">{d}</div>
+                ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-y-4 gap-x-3 md:gap-6">
+                {renderCalendarDays()}
+            </div>
+            
+            <div className="mt-12 flex justify-center gap-8 text-xs font-black uppercase tracking-widest text-slate-400 flex-wrap">
+                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-lg bg-emerald-500 shadow-lg shadow-emerald-200"></div> Hadir</div>
+                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-lg bg-blue-500 shadow-lg shadow-blue-200"></div> Sakit</div>
+                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-lg bg-amber-500 shadow-lg shadow-amber-200"></div> Izin</div>
+                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-lg bg-rose-500 shadow-lg shadow-rose-200"></div> Alpa</div>
+            </div>
         </div>
       </div>
       
-      {/* Spacer to ensure scroll area exists if content is close to bottom nav */}
-      <div className="h-10 md:hidden"></div>
-
-      {/* Detail Modal */}
+      {/* Detail Modal (Recipe 7: Atmospheric) */}
       {selectedDateDetails && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-in fade-in duration-200">
-              <div className={`w-full md:max-w-md rounded-t-3xl md:rounded-3xl p-1 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-hidden ${isPremium ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
-                   <div className="p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className={`text-xl font-bold ${isPremium ? 'text-white' : 'text-slate-900'}`}>Detail Kehadiran</h3>
-                            <button onClick={() => setSelectedDateDetails(null)} className={`p-2 rounded-full transition-colors ${isPremium ? 'bg-slate-800 hover:bg-slate-700 text-slate-400' : 'bg-slate-50 hover:bg-slate-100 text-slate-500'}`}>
-                                <X className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center md:p-6 animate-in fade-in duration-300">
+              <div className="w-full md:max-w-md rounded-t-[3rem] md:rounded-[3rem] p-2 shadow-2xl animate-in slide-in-from-bottom-10 duration-500 overflow-hidden bg-white">
+                   <div className="p-8">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-2xl font-black tracking-tighter text-slate-900">Detail Absensi</h3>
+                            <button onClick={() => setSelectedDateDetails(null)} className="p-3 rounded-2xl transition-all bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-rose-500">
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
                         
-                        {/* Status Card */}
-                        <div className={`p-8 rounded-2xl mb-8 text-center text-white shadow-xl relative overflow-hidden group
-                            ${selectedDateDetails.status === 'Hadir' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200' : 
-                            selectedDateDetails.status === 'Sakit' ? 'bg-gradient-to-br from-blue-400 to-blue-600 shadow-blue-200' : 
-                            selectedDateDetails.status === 'Izin' ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-200' : 'bg-gradient-to-br from-rose-400 to-rose-600 shadow-rose-200'
+                        {/* Status Card (Recipe 7: Atmospheric) */}
+                        <div className={`p-10 rounded-[2.5rem] mb-8 text-center text-white shadow-2xl relative overflow-hidden group
+                            ${selectedDateDetails.status === 'Hadir' ? 'bg-emerald-600 shadow-emerald-200' : 
+                            selectedDateDetails.status === 'Sakit' ? 'bg-blue-600 shadow-blue-200' : 
+                            selectedDateDetails.status === 'Izin' ? 'bg-amber-600 shadow-amber-200' : 'bg-rose-600 shadow-rose-200'
                             }
                         `}>
-                            {/* Decorative Circles */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-10 -mb-10 blur-xl"></div>
+                            {/* Animated Background Mesh */}
+                            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_0%,white,transparent_70%)]"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
 
                             <div className="relative z-10 flex flex-col items-center">
-                                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 ring-4 ring-white/10">
-                                    {selectedDateDetails.status === 'Hadir' ? <CheckCircle2 className="w-8 h-8" strokeWidth={3} /> : 
-                                    selectedDateDetails.status === 'Sakit' ? <Info className="w-8 h-8" strokeWidth={3} /> :
-                                    selectedDateDetails.status === 'Izin' ? <FileText className="w-8 h-8" strokeWidth={3} /> :
-                                    <X className="w-8 h-8" strokeWidth={3} />}
+                                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-6 ring-4 ring-white/10 shadow-xl">
+                                    {selectedDateDetails.status === 'Hadir' ? <CheckCircle2 className="w-10 h-10" strokeWidth={3} /> : 
+                                    selectedDateDetails.status === 'Sakit' ? <Info className="w-10 h-10" strokeWidth={3} /> :
+                                    selectedDateDetails.status === 'Izin' ? <FileText className="w-10 h-10" strokeWidth={3} /> :
+                                    <X className="w-10 h-10" strokeWidth={3} />}
                                 </div>
-                                <h4 className="text-3xl font-black uppercase tracking-tight mb-1">{selectedDateDetails.status}</h4>
-                                <p className="opacity-90 font-medium text-sm">
+                                <h4 className="text-4xl font-black uppercase tracking-tighter mb-2">{selectedDateDetails.status}</h4>
+                                <p className="text-white/80 font-bold text-sm uppercase tracking-widest">
                                     {new Date(selectedDateDetails.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Details Grid */}
+                        {/* Details Grid (Bento Style) */}
                         <div className="space-y-4">
-                            <div className={`flex items-center justify-between p-5 rounded-2xl border ${isPremium ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2.5 rounded-xl shadow-sm border ${isPremium ? 'bg-slate-900 border-slate-700 text-amber-400' : 'bg-white border-slate-100 text-primary-600'}`}>
-                                        <Clock className="w-5 h-5" />
+                            <div className="flex items-center justify-between p-6 rounded-[2rem] border-2 bg-slate-50/50 border-slate-100">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3.5 rounded-2xl shadow-lg bg-white text-indigo-600">
+                                        <Clock className="w-6 h-6" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Waktu Masuk</p>
-                                        <p className={`font-bold text-lg ${isPremium ? 'text-white' : 'text-slate-900'}`}>
-                                            {selectedDateDetails.time} <span className="text-xs text-slate-400 font-medium">WIB</span>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Waktu Masuk</p>
+                                        <p className="font-black text-xl text-slate-900 tracking-tight">
+                                            {selectedDateDetails.time} <span className="text-xs text-slate-400 font-bold ml-1">WIB</span>
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className={`p-5 rounded-2xl border ${isPremium ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                                <div className="flex items-start gap-3">
-                                    <div className={`p-2.5 rounded-xl shadow-sm border ${isPremium ? 'bg-slate-900 border-slate-700 text-amber-400' : 'bg-white border-slate-100 text-primary-600'}`}>
-                                        <FileText className="w-5 h-5" />
+                            <div className="p-6 rounded-[2rem] border-2 bg-slate-50/50 border-slate-100">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3.5 rounded-2xl shadow-lg bg-white text-indigo-600">
+                                        <FileText className="w-6 h-6" />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Keterangan</p>
-                                        <p className={`font-bold leading-relaxed text-sm ${isPremium ? 'text-white' : 'text-slate-900'}`}>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Keterangan</p>
+                                        <p className="font-bold leading-relaxed text-sm text-slate-900">
                                             {selectedDateDetails.details || 'Tidak ada keterangan tambahan.'}
                                         </p>
                                     </div>
@@ -186,8 +195,8 @@ const HistoryView: React.FC = () => {
                             </div>
                         </div>
                         
-                        <button onClick={() => setSelectedDateDetails(null)} className={`w-full mt-8 py-4 font-bold rounded-2xl transition-colors shadow-xl ${isPremium ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}>
-                            Tutup
+                        <button onClick={() => setSelectedDateDetails(null)} className="w-full mt-10 py-5 font-black rounded-[2rem] text-xs uppercase tracking-[0.2em] transition-all shadow-2xl bg-slate-900 text-white hover:bg-indigo-600 hover:shadow-indigo-200">
+                            Tutup Detail
                         </button>
                    </div>
               </div>

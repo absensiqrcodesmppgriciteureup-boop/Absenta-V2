@@ -15,7 +15,7 @@ const StudentsView: React.FC = () => {
   const [editingStudent, setEditingStudent] = useState<User | null>(null);
   
   // FORM STATES
-  const [formData, setFormData] = useState({ name: '', nis: '', class: '', isPremium: false });
+  const [formData, setFormData] = useState({ name: '', nis: '', class: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   
@@ -67,7 +67,7 @@ const StudentsView: React.FC = () => {
   // Handlers
   const handleAdd = () => {
       setEditingStudent(null);
-      setFormData({ name: '', nis: '', class: '', isPremium: false });
+      setFormData({ name: '', nis: '', class: '' });
       setActiveTab('profile');
       setFormError('');
       setIsModalOpen(true);
@@ -75,7 +75,7 @@ const StudentsView: React.FC = () => {
 
   const handleEdit = (student: User) => {
       setEditingStudent(student);
-      setFormData({ name: student.name, nis: student.nis, class: student.class || '', isPremium: student.isPremium || false });
+      setFormData({ name: student.name, nis: student.nis, class: student.class || '' });
       setActiveTab('profile');
       setFormError('');
       setIsModalOpen(true);
@@ -203,13 +203,7 @@ const StudentsView: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filtered.slice(0, 50).map(student => ( 
-                <div key={student.uid} className={`bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all group relative ${student.isPremium ? 'border-amber-200 shadow-amber-100' : 'border-slate-200'}`}>
-                    {student.isPremium && (
-                        <div className="absolute top-0 right-14 bg-amber-100 text-amber-600 p-1.5 rounded-b-lg shadow-sm border border-amber-200 border-t-0 z-10">
-                            <Crown className="w-4 h-4" fill="currentColor" />
-                        </div>
-                    )}
-
+                <div key={student.uid} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group relative">
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          <button 
                             onClick={() => handleEdit(student)}
@@ -228,9 +222,9 @@ const StudentsView: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-4 mb-4">
-                        <img src={student.photo} alt={student.name} className={`w-16 h-16 rounded-full bg-slate-100 object-cover ring-4 ${student.isPremium ? 'ring-amber-200' : 'ring-slate-50'}`} />
+                        <img src={student.photo} alt={student.name} className="w-16 h-16 rounded-full bg-slate-100 object-cover ring-4 ring-slate-50" />
                         <div className="min-w-0 flex-1">
-                            <h3 className={`font-bold transition-colors truncate ${student.isPremium ? 'text-amber-600' : 'text-slate-900 group-hover:text-primary-600'}`}>{student.name}</h3>
+                            <h3 className="font-bold transition-colors truncate text-slate-900 group-hover:text-primary-600">{student.name}</h3>
                             <p className="text-sm text-slate-500 font-mono">{student.nis}</p>
                             <span className="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider">{student.class}</span>
                         </div>
@@ -319,28 +313,6 @@ const StudentsView: React.FC = () => {
                                     </div>
                                 </div>
                                 
-                                {/* PREMIUM TOGGLE */}
-                                <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between">
-                                    <div className="flex gap-3">
-                                        <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                                            <Crown className="w-5 h-5" fill="currentColor" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-amber-900">Mode Premium (VIP)</p>
-                                            <p className="text-xs text-amber-700/70">Aktifkan XP Booster 2x & Item Eksklusif</p>
-                                        </div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="sr-only peer"
-                                            checked={formData.isPremium}
-                                            onChange={(e) => setFormData({...formData, isPremium: e.target.checked})}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                                    </label>
-                                </div>
-
                                 {formError && <div className="p-3 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {formError}</div>}
                                 <div className="pt-4"><button type="submit" disabled={isSubmitting} className="w-full py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 shadow-lg transition-all">{isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Simpan Perubahan'}</button></div>
                             </form>

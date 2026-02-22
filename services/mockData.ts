@@ -1,4 +1,4 @@
-import { User, AttendanceRecord, Announcement, TeacherNotification, ScheduleItem, ShopItem } from '../types';
+import { User, AttendanceRecord, Announcement, TeacherNotification, ScheduleItem, ShopItem, Aspiration } from '../types';
 import { RAW_STUDENTS_DATA, RAW_IDS } from './rawData';
 import { fetchSheetAttendance, submitToGoogleFormBackground } from './sheetService'; 
 
@@ -89,8 +89,8 @@ export const SHOP_ITEMS: ShopItem[] = [
     { id: 'border_electric', name: 'Thunder Storm', type: 'border', value: 'electric', price: 400, description: 'Energi listrik statis bertegangan tinggi.' },
     { id: 'border_fire', name: 'Magma Warrior', type: 'border', value: 'fire', price: 550, description: 'Api abadi yang membakar semangat juara.' },
     { id: 'border_shadow', name: 'Shadow Assassin', type: 'border', value: 'shadow', price: 1200, description: 'Diselimuti aura kegelapan misterius.' },
-    { id: 'border_cyber', name: 'Cyberpunk HUD', type: 'border', value: 'cyber', price: 0, description: 'Eksklusif Premium. Teknologi hologram masa depan.', reqPremium: true },
-    { id: 'border_royal', name: 'King Crown', type: 'border', value: 'royal', price: 0, description: 'Eksklusif Premium. Mahkota emas murni.', reqPremium: true },
+    { id: 'border_cyber', name: 'Cyberpunk HUD', type: 'border', value: 'cyber', price: 0, description: 'Teknologi hologram masa depan.' },
+    { id: 'border_royal', name: 'King Crown', type: 'border', value: 'royal', price: 0, description: 'Mahkota emas murni.' },
 ];
 
 // ==========================================
@@ -100,6 +100,7 @@ export const SHOP_ITEMS: ShopItem[] = [
 const STORAGE_KEY_USERS = 'absenta_server_users_v5'; 
 const STORAGE_KEY_ATTENDANCE = 'absenta_server_attendance_v2';
 const STORAGE_KEY_NOTIFICATIONS = 'absenta_server_notifications_v2';
+const STORAGE_KEY_ASPIRATIONS = 'absenta_server_aspirations_v1';
 const STORAGE_KEY_DELETED = 'absenta_deleted_ids_v1'; 
 
 // CACHE VARIABLES
@@ -114,12 +115,28 @@ const loadInitialUsers = (): Record<string, User> => {
     const deletedIDs: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED) || '[]');
     const finalUsers: Record<string, User> = {};
 
-    // Admin
+    // Admin / Operator
+    if (savedUsers['operator']) {
+        finalUsers['operator'] = savedUsers['operator'];
+        delete savedUsers['operator']; 
+    } else {
+        finalUsers['operator'] = { uid: '999', nis: 'operator', name: 'Operator Sekolah', role: 'operator', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&fit=crop' };
+    }
+
+    // OSIS
+    if (savedUsers['osis']) {
+        finalUsers['osis'] = savedUsers['osis'];
+        delete savedUsers['osis'];
+    } else {
+        finalUsers['osis'] = { uid: '888', nis: 'osis', name: 'Pengurus OSIS', role: 'osis', photo: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=200&fit=crop' };
+    }
+
+    // Teacher (Legacy Admin) - keeping for compatibility if needed, or map to teacher role
     if (savedUsers['admin']) {
         finalUsers['admin'] = savedUsers['admin'];
         delete savedUsers['admin']; 
     } else {
-        finalUsers['admin'] = { uid: '999', nis: 'admin', name: 'Operator Sekolah', role: 'teacher', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&fit=crop' };
+        finalUsers['admin'] = { uid: '777', nis: 'admin', name: 'Guru Piket', role: 'teacher', photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&fit=crop' };
     }
 
     // Merge RAW Data
@@ -134,7 +151,7 @@ const loadInitialUsers = (): Record<string, User> => {
                    u.class === codeUser.kelas;
         });
 
-        const defaultUserProps = { spentXp: 0, theme: 'blue', border: 'none', inventory: ['theme_default', 'border_none'], isPremium: false };
+        const defaultUserProps = { spentXp: 0, theme: 'blue', border: 'none', inventory: ['theme_default', 'border_none'] };
 
         if (nameKey) {
             finalUsers[codeUser.pin] = { ...defaultUserProps, ...savedUsers[nameKey], uid: codeUser.id, nis: codeUser.pin, name: codeUser.nama, class: codeUser.kelas };
@@ -161,7 +178,6 @@ const loadInitialUsers = (): Record<string, User> => {
             theme: 'blue',
             border: 'none',
             inventory: ['theme_default', 'border_none'],
-            isPremium: false,
             photo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(codeUser.nama)}`
         };
     });
@@ -180,11 +196,13 @@ const loadInitialUsers = (): Record<string, User> => {
 export let MOCK_USERS = loadInitialUsers();
 export let MOCK_ATTENDANCE: AttendanceRecord[] = JSON.parse(localStorage.getItem(STORAGE_KEY_ATTENDANCE) || '[]');
 export let MOCK_NOTIFICATIONS: TeacherNotification[] = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTIFICATIONS) || '[]');
+export let MOCK_ASPIRATIONS: Aspiration[] = JSON.parse(localStorage.getItem(STORAGE_KEY_ASPIRATIONS) || '[]');
 
 const saveChanges = () => {
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(MOCK_USERS));
     localStorage.setItem(STORAGE_KEY_ATTENDANCE, JSON.stringify(MOCK_ATTENDANCE));
     localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(MOCK_NOTIFICATIONS));
+    localStorage.setItem(STORAGE_KEY_ASPIRATIONS, JSON.stringify(MOCK_ASPIRATIONS));
 };
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [
@@ -229,7 +247,6 @@ export const api = {
               const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === sheetRecord.userId);
               if (userKey) {
                   let xpAdd = sheetRecord.status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(sheetRecord.status) ? 5 : 0);
-                  if (MOCK_USERS[userKey].isPremium) xpAdd *= 2;
                   MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + xpAdd;
                   MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
               }
@@ -337,7 +354,6 @@ export const api = {
          
          if (userKey) {
              let newPoints = status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(status) ? 5 : 0);
-             if (MOCK_USERS[userKey].isPremium) newPoints *= 2;
              MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + newPoints;
              MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
          }
@@ -370,7 +386,6 @@ export const api = {
             const userKey = Object.keys(MOCK_USERS).find(k => MOCK_USERS[k].uid === permit.userId);
              if (userKey) {
                  let xpAdd = ['Sakit','Izin'].includes(permit.status) ? 5 : 0;
-                 if (MOCK_USERS[userKey].isPremium) xpAdd *= 2;
                  MOCK_USERS[userKey].xp = (MOCK_USERS[userKey].xp || 0) + xpAdd;
                  MOCK_USERS[userKey].level = calculateLevel(MOCK_USERS[userKey].xp || 0);
              }
@@ -380,7 +395,7 @@ export const api = {
         return false;
   },
 
-  addStudent: async (studentData: { name: string, nis: string, class: string, isPremium?: boolean }): Promise<boolean> => {
+  addStudent: async (studentData: { name: string, nis: string, class: string }): Promise<boolean> => {
         if (MOCK_USERS[studentData.nis]) return false;
 
         const newId = Math.random().toString(36).substr(2, 9);
@@ -392,14 +407,13 @@ export const api = {
             role: 'student',
             level: 1, xp: 0, spentXp: 0,
             theme: 'blue', border: 'none', inventory: ['theme_default', 'border_none'],
-            isPremium: studentData.isPremium || false,
             photo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentData.name)}`
         };
         saveChanges();
         return true;
   },
 
-  updateStudent: async (uid: string, data: { name: string, class: string, nis: string, isPremium?: boolean }): Promise<boolean> => {
+  updateStudent: async (uid: string, data: { name: string, class: string, nis: string }): Promise<boolean> => {
       const userKey = Object.keys(MOCK_USERS).find(key => MOCK_USERS[key].uid === uid);
       if (!userKey) return false;
       
@@ -465,7 +479,6 @@ export const api = {
       MOCK_ATTENDANCE.unshift(newRecord);
       
       let add = record.status === 'Hadir' ? 10 : (['Sakit','Izin'].includes(record.status) ? 5 : 0);
-      if (user.isPremium) add *= 2;
 
       user.xp = (user.xp || 0) + add;
       user.level = calculateLevel(user.xp || 0);
@@ -550,8 +563,6 @@ export const api = {
       const item = SHOP_ITEMS.find(i => i.id === itemId);
       if (!item) return {success: false, message: 'Item not found'};
 
-      if (item.reqPremium && !user.isPremium) return {success: false, message: 'Item ini khusus akun Premium!'};
-
       const currentBalance = (user.xp || 0) - (user.spentXp || 0);
       if (currentBalance < item.price) return {success: false, message: 'XP tidak cukup'};
 
@@ -575,5 +586,54 @@ export const api = {
 
       saveChanges();
       return {success: true, message: `Berhasil menggunakan item`};
+  },
+
+  // ==========================================
+  // ASPIRASI DIGITAL
+  // ==========================================
+  submitAspiration: async (aspiration: Omit<Aspiration, 'id' | 'date' | 'status'>): Promise<boolean> => {
+      const newAspiration: Aspiration = {
+          id: `asp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          ...aspiration,
+          status: 'Pending',
+          date: new Date().toISOString().split('T')[0],
+      };
+      MOCK_ASPIRATIONS.unshift(newAspiration);
+      saveChanges();
+      return true;
+  },
+
+  getAspirations: async (): Promise<Aspiration[]> => {
+      return [...MOCK_ASPIRATIONS];
+  },
+
+  updateAspirationStatus: async (id: string, status: Aspiration['status'], feedback?: string): Promise<boolean> => {
+      const idx = MOCK_ASPIRATIONS.findIndex(a => a.id === id);
+      if (idx !== -1) {
+          MOCK_ASPIRATIONS[idx].status = status;
+          if (feedback) MOCK_ASPIRATIONS[idx].feedback = feedback;
+          saveChanges();
+          return true;
+      }
+      return false;
+  },
+
+  deleteAspiration: async (id: string): Promise<boolean> => {
+      let idx = MOCK_ASPIRATIONS.findIndex(a => a.id === id);
+      
+      // Fallback: Try reloading from storage if not found (Sync Issue Protection)
+      if (idx === -1) {
+          const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_ASPIRATIONS) || '[]');
+          MOCK_ASPIRATIONS.length = 0;
+          MOCK_ASPIRATIONS.push(...stored);
+          idx = MOCK_ASPIRATIONS.findIndex(a => a.id === id);
+      }
+
+      if (idx !== -1) {
+          MOCK_ASPIRATIONS.splice(idx, 1);
+          saveChanges();
+          return true;
+      }
+      return false;
   }
 };

@@ -1,5 +1,5 @@
 
-export type Role = 'student' | 'teacher';
+export type Role = 'student' | 'teacher' | 'osis' | 'operator';
 
 export interface User {
   uid: string;
@@ -14,7 +14,6 @@ export interface User {
   theme?: string; // New: Active Color Theme (blue, emerald, rose, amber, violet)
   border?: string; // New: Active Profile Border
   inventory?: string[]; // New: List of unlocked item IDs
-  isPremium?: boolean; // New: Sultan Mode Status
 }
 
 export type AttendanceStatus = 'Hadir' | 'Sakit' | 'Izin' | 'Alpa' | 'Pending';
@@ -31,6 +30,22 @@ export interface AttendanceRecord {
   details?: string;
   attachmentUrl?: string; // URL for photo proof
   isVerified?: boolean;
+}
+
+export type AspirationStatus = 'Pending' | 'Reviewed' | 'Resolved' | 'Rejected';
+
+export interface Aspiration {
+  id: string;
+  userId: string;
+  userName: string;
+  userClass: string;
+  title: string;
+  content: string;
+  category: 'Fasilitas' | 'KBM' | 'Eskul' | 'Lainnya';
+  status: AspirationStatus;
+  date: string;
+  isAnonymous: boolean;
+  feedback?: string; // Feedback from OSIS/Operator
 }
 
 export interface Announcement {
@@ -65,5 +80,4 @@ export interface ShopItem {
     value: string; // Color code or css class
     price: number;
     description: string;
-    reqPremium?: boolean; // New: Item exclusive for Premium users
 }

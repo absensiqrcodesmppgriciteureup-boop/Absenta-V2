@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply bg-slate-50 text-slate-900;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Bento Grid Layouts */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+}

@@ -149,27 +149,14 @@ const TeacherLayout: React.FC = () => {
       setIsProcessingDone(false);
 
       // 2. Use setTimeout to defer the heavy lifting 
-      // This allows React to render the Modal State FIRST before the loop blocks anything
       setTimeout(async () => {
-          const addLog = (text: string, status: 'pending'|'success'|'error' = 'pending') => {
-              setProcessLogs(prev => [...prev, {
-                  id: Math.random().toString(),
-                  text,
-                  status,
-                  time: new Date().toLocaleTimeString('id-ID', {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'})
-              }]);
-          };
-
-          addLog(`SYSTEM START: Menyiapkan ${studentsToProcess.length} data...`, 'pending');
           const todayStr = new Date().toLocaleDateString('en-CA');
-
           let successCount = 0;
           
           for (let i = 0; i < studentsToProcess.length; i++) {
               const student = studentsToProcess[i];
               const progress = Math.round(((i + 1) / studentsToProcess.length) * 100);
               
-              addLog(`[${i+1}/${studentsToProcess.length}] Menghubungkan Google Form: ${student.name}...`, 'pending');
               setProcessProgress(progress);
 
               try {
@@ -179,18 +166,19 @@ const TeacherLayout: React.FC = () => {
                   // B. Simpan ke Lokal (Tanpa network call lagi)
                   await api.markBulkAlpha([student.uid], todayStr, true); // true = skip network in API
                   
-                  addLog(`✅ SUKSES: Data ${student.name} terkirim.`, 'success');
                   successCount++;
+                  
+                  // Add dummy log for counting if needed, or just rely on successCount
+                  setProcessLogs(prev => [...prev, { id: Math.random().toString(), text: 'Success', status: 'success', time: '' }]);
 
-                  // Delay buatan agar user sempat baca log (UX Satisfaction)
-                  await new Promise(r => setTimeout(r, 800)); 
+                  // Delay buatan agar user melihat progress bar bergerak (UX)
+                  await new Promise(r => setTimeout(r, 500)); 
 
               } catch (error) {
-                  addLog(`⚠️ ERROR: Gagal mengirim ${student.name}.`, 'error');
+                  console.error(error);
               }
           }
 
-          addLog(`🎉 SELESAI! ${successCount} dari ${studentsToProcess.length} berhasil diproses.`, 'success');
           setIsProcessingDone(true);
           setProcessProgress(100);
           
@@ -351,68 +339,40 @@ const TeacherLayout: React.FC = () => {
         </div>
       </main>
 
-      {/* --- LIVE PROCESS TERMINAL MODAL (Z-INDEX 9999 - TOP MOST) --- */}
+      {/* --- STANDARD LOADING MODAL --- */}
       {isProcessModalOpen && (
-          <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-              <div className="bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-700 flex flex-col h-[80vh] shadow-emerald-500/10">
-                  {/* Header Terminal */}
-                  <div className="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                          <Terminal className="w-5 h-5 text-emerald-500" />
-                          <div>
-                              <h3 className="text-white font-bold font-mono text-sm tracking-wider">SYSTEM_PROCESS_EXECUTOR.EXE</h3>
-                              <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Connected to Google Server</p>
+          <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+              <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in duration-300">
+                  
+                  {!isProcessingDone ? (
+                      <>
+                          <div className="relative mb-6">
+                              <Loader2 className="w-16 h-16 text-primary-200 animate-spin" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-primary-600">{processProgress}%</span>
+                              </div>
                           </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                           <span className={`text-xs font-mono animate-pulse ${isProcessingDone ? 'text-emerald-400' : 'text-amber-400'}`}>
-                               {isProcessingDone ? 'PROCESS COMPLETED' : 'EXECUTING...'}
-                           </span>
-                      </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-800 h-1">
-                      <div 
-                          className="bg-emerald-500 h-1 transition-all duration-300 ease-out shadow-[0_0_15px_#10b981]" 
-                          style={{ width: `${processProgress}%` }}
-                      ></div>
-                  </div>
-
-                  {/* Log Area */}
-                  <div className="flex-1 overflow-y-auto p-6 font-mono text-sm space-y-3 bg-black/50 custom-scrollbar border-t border-slate-800">
-                      {processLogs.length === 0 && <p className="text-slate-600 italic text-xs">Initializing sequence...</p>}
-                      {processLogs.map((log) => (
-                          <div key={log.id} className="flex gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
-                              <span className="text-slate-600 text-xs shrink-0 select-none font-bold">[{log.time}]</span>
-                              <span className={`break-words ${
-                                  log.status === 'success' ? 'text-emerald-400' : 
-                                  log.status === 'error' ? 'text-rose-500' : 'text-slate-300'
-                              }`}>
-                                  {log.status === 'pending' && <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2 animate-pulse"></span>}
-                                  {log.status === 'success' && <Globe className="w-3 h-3 inline mr-2" />}
-                                  {log.text}
-                              </span>
+                          <h3 className="text-xl font-bold text-slate-900 mb-2">Memproses Data...</h3>
+                          <p className="text-slate-500 text-sm">Sedang mengirim data ke server sekolah.</p>
+                          <p className="text-xs text-slate-400 mt-4">Mohon jangan tutup halaman ini.</p>
+                      </>
+                  ) : (
+                      <>
+                          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-300">
+                              <CheckCircle2 className="w-8 h-8" />
                           </div>
-                      ))}
-                      <div ref={logsEndRef} />
-                  </div>
-
-                  {/* Footer Action */}
-                  <div className="p-4 bg-slate-800 border-t border-slate-700 flex justify-end">
-                      <button 
-                          onClick={() => setIsProcessModalOpen(false)}
-                          disabled={!isProcessingDone}
-                          className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                              isProcessingDone 
-                              ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/40 cursor-pointer active:scale-95' 
-                              : 'bg-slate-700 text-slate-500 cursor-not-allowed opacity-50'
-                          }`}
-                      >
-                          {isProcessingDone ? <CheckCircle2 className="w-4 h-4"/> : <Loader2 className="w-4 h-4 animate-spin"/>}
-                          {isProcessingDone ? 'Tutup Terminal' : 'Mohon Tunggu...'}
-                      </button>
-                  </div>
+                          <h3 className="text-xl font-bold text-slate-900 mb-2">Selesai!</h3>
+                          <p className="text-slate-500 text-sm mb-6">
+                              Berhasil memproses data kehadiran siswa.
+                          </p>
+                          <button 
+                              onClick={() => setIsProcessModalOpen(false)}
+                              className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200"
+                          >
+                              Tutup
+                          </button>
+                      </>
+                  )}
               </div>
           </div>
       )}
