@@ -1,9 +1,9 @@
 import React from 'react';
-import { Crown, Leaf, Flame, Zap, Ghost, Cpu } from 'lucide-react';
+import { Crown, Leaf, Flame, Zap, Ghost, Cpu, Gamepad2, Sparkles } from 'lucide-react';
 
 interface AvatarFrameProps {
     src: string;
-    borderId?: string; // nature, fire, electric, cyber, shadow, royal
+    borderId?: string; // nature, fire, electric, cyber, shadow, royal, pixel, galaxy
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     className?: string;
     level?: number;
@@ -50,6 +50,53 @@ const AvatarFrame: React.FC<AvatarFrameProps> = ({ src, borderId = 'none', size 
                 </div>
                 <div className="w-full h-full rounded-full overflow-hidden p-[2px]">
                     <BaseImage />
+                </div>
+            </div>
+        );
+    }
+
+    if (borderId === 'pixel') {
+        return (
+            <div className={`relative ${sizeClass} ${className}`}>
+                <div className="absolute -inset-1 border-4 border-dashed border-slate-900 rounded-none bg-white/50"></div>
+                <div className="absolute inset-0 border-2 border-slate-900 bg-white"></div>
+                <div className="absolute -top-2 -right-2 bg-slate-900 text-white p-1 border-2 border-white z-10 shadow-lg transform rotate-6">
+                    <Gamepad2 className={iconSize} />
+                </div>
+                <div className="w-full h-full overflow-hidden p-[4px] bg-slate-200 border border-slate-900">
+                    <BaseImage extraClass="rounded-none grayscale contrast-125" />
+                </div>
+            </div>
+        );
+    }
+
+    if (borderId === 'galaxy') {
+        return (
+            <div className={`relative ${sizeClass} ${className}`}>
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur opacity-75 animate-pulse"></div>
+                <div className="absolute inset-0 rounded-full border-2 border-white/50 z-10 ring-1 ring-white/20"></div>
+                <div className="absolute -top-1 right-0 text-yellow-200 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)] z-20 animate-bounce">
+                    <Sparkles className={iconSize} fill="currentColor" />
+                </div>
+                <div className="w-full h-full rounded-full overflow-hidden p-[3px] bg-black relative">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-50 z-10 pointer-events-none"></div>
+                    <BaseImage />
+                </div>
+            </div>
+        );
+    }
+
+    if (borderId === 'glitch') {
+        return (
+            <div className={`relative ${sizeClass} ${className}`}>
+                <div className="absolute -inset-1 bg-red-500/50 translate-x-[2px] rounded-full mix-blend-screen"></div>
+                <div className="absolute -inset-1 bg-blue-500/50 -translate-x-[2px] rounded-full mix-blend-screen"></div>
+                <div className="absolute inset-0 border-2 border-white rounded-full z-10 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-white/50 animate-pulse"></div>
+                    <div className="absolute bottom-4 left-0 w-full h-0.5 bg-white/50 animate-pulse delay-75"></div>
+                </div>
+                <div className="w-full h-full rounded-full overflow-hidden p-[2px] bg-black relative">
+                    <BaseImage extraClass="contrast-150 saturate-150" />
                 </div>
             </div>
         );

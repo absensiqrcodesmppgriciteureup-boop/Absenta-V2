@@ -54,6 +54,7 @@ const RewardShopView: React.FC = () => {
             case 'emerald': return 'bg-emerald-600';
             case 'rose': return 'bg-rose-600';
             case 'amber': return 'bg-amber-600';
+            case 'cyan': return 'bg-cyan-600';
             case 'violet': return 'bg-violet-600';
             default: return 'bg-slate-500';
         }

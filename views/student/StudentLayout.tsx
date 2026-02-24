@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Calendar, PlusCircle, LogOut, Award, School, LayoutDashboard, ShoppingBag, Settings, Crown, Gem, MessageSquare } from 'lucide-react';
+import { Home, Calendar, PlusCircle, LogOut, Award, School, LayoutDashboard, ShoppingBag, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../App';
 import HomeView from './HomeView';
 import PermitView from './PermitView';
@@ -38,6 +38,7 @@ const StudentLayout: React.FC = () => {
       emerald: 'bg-emerald-600 shadow-emerald-200',
       rose: 'bg-rose-600 shadow-rose-200',
       amber: 'bg-amber-600 shadow-amber-200',
+      cyan: 'bg-cyan-600 shadow-cyan-200',
       violet: 'bg-violet-600 shadow-violet-200'
   };
 
@@ -45,12 +46,14 @@ const StudentLayout: React.FC = () => {
   const activeTextClass = activeTheme === 'blue' ? 'text-primary-600' : 
                           activeTheme === 'emerald' ? 'text-emerald-600' :
                           activeTheme === 'rose' ? 'text-rose-600' :
-                          activeTheme === 'amber' ? 'text-amber-600' : 'text-violet-600';
+                          activeTheme === 'amber' ? 'text-amber-600' : 
+                          activeTheme === 'cyan' ? 'text-cyan-600' : 'text-violet-600';
 
   const activeBgClass = activeTheme === 'blue' ? 'bg-primary-50' : 
                         activeTheme === 'emerald' ? 'bg-emerald-50' :
                         activeTheme === 'rose' ? 'bg-rose-50' :
-                        activeTheme === 'amber' ? 'bg-amber-50' : 'bg-violet-50';
+                        activeTheme === 'amber' ? 'bg-amber-50' : 
+                        activeTheme === 'cyan' ? 'bg-cyan-50' : 'bg-violet-50';
 
   return (
     <div className="h-screen w-full flex flex-col md:flex-row relative overflow-hidden transition-colors duration-500 bg-slate-50">

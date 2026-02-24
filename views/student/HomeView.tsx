@@ -229,15 +229,22 @@ const HomeView: React.FC<{onChangeTab?: (tab: any) => void}> = ({onChangeTab}) =
                 
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="text-center md:text-left">
-                        <div className="flex items-baseline justify-center md:justify-start gap-2 font-sans">
+                        <div className="flex items-baseline justify-center md:justify-start font-sans">
                             <h2 className="text-7xl md:text-9xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 drop-shadow-2xl">
                                 {formatTime(currentTime)}
                             </h2>
-                            <span className="text-2xl md:text-3xl font-bold text-slate-500 w-12 tabular-nums">{formatSeconds(currentTime)}</span>
+                            <div className="w-0 overflow-visible flex items-baseline">
+                                <span className="ml-3 md:ml-4 text-2xl md:text-3xl font-bold text-slate-500 w-12 tabular-nums">
+                                    {formatSeconds(currentTime)}
+                                </span>
+                            </div>
                         </div>
-                        <p className="text-xl font-medium tracking-wide mt-4 flex items-center justify-center md:justify-start gap-3 text-indigo-200/80">
-                            <CalendarDays className="w-6 h-6" /> {formatDate(currentTime)}
-                        </p>
+                        <div className="mt-4 flex items-center justify-center md:justify-start gap-2 text-indigo-200/80">
+                            <CalendarDays className="w-5 h-5" />
+                            <p className="text-lg font-medium tracking-wide">
+                                {formatDate(currentTime)}
+                            </p>
+                        </div>
                     </div>
 
                     {/* DYNAMIC STATUS CARD (Glassmorphism) */}

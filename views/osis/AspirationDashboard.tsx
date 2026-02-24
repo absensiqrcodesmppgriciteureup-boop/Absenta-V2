@@ -4,7 +4,11 @@ import { api } from '../../services/mockData';
 import { Aspiration } from '../../types';
 import { useAuth } from '../../App';
 
-const AspirationDashboard: React.FC = () => {
+interface AspirationDashboardProps {
+  embedded?: boolean;
+}
+
+const AspirationDashboard: React.FC<AspirationDashboardProps> = ({ embedded = false }) => {
   const { user } = useAuth();
   const [aspirations, setAspirations] = useState<Aspiration[]>([]);
   const [filterStatus, setFilterStatus] = useState<Aspiration['status'] | 'All'>('All');
@@ -78,16 +82,18 @@ const AspirationDashboard: React.FC = () => {
   const resolvedCount = aspirations.filter(a => a.status === 'Resolved').length;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          Dashboard Aspirasi
-        </h1>
-        <p className="text-slate-500 font-medium">Pantau dan tindak lanjuti aspirasi siswa.</p>
-      </div>
+    <div className={embedded ? "w-full space-y-6" : "p-4 md:p-8 max-w-7xl mx-auto pb-24"}>
+      {!embedded && (
+        <div className="mb-8">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Dashboard Aspirasi
+          </h1>
+          <p className="text-slate-500 font-medium">Pantau dan tindak lanjuti aspirasi siswa.</p>
+        </div>
+      )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
+      <div className={`grid grid-cols-3 gap-6 ${embedded ? 'mb-0' : 'mb-8'}`}>
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-full mb-2">
                 <MessageSquare className="w-5 h-5" />
@@ -112,7 +118,7 @@ const AspirationDashboard: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-6 space-y-4">
+      <div className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-4 ${embedded ? 'mb-0' : 'mb-6'}`}>
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 

@@ -3,8 +3,6 @@ import { User } from './types';
 import LoginView from './views/auth/LoginView';
 import StudentLayout from './views/student/StudentLayout';
 import TeacherLayout from './views/teacher/TeacherLayout';
-import OsisLayout from './views/osis/OsisLayout';
-import OperatorLayout from './views/operator/OperatorLayout';
 import { Loader2, School } from 'lucide-react';
 import { api } from './services/mockData';
 
@@ -154,10 +152,6 @@ const App: React.FC = () => {
         <LoginView />
       ) : user.role === 'teacher' ? (
         <TeacherLayout />
-      ) : user.role === 'osis' ? (
-        <OsisLayout />
-      ) : user.role === 'operator' ? (
-        <OperatorLayout />
       ) : (
         <StudentLayout />
       )}

@@ -81,13 +81,17 @@ export const SHOP_ITEMS: ShopItem[] = [
     { id: 'theme_emerald', name: 'Nature Green', type: 'theme', value: 'emerald', price: 150, description: 'Nuansa hijau alam yang segar.' },
     { id: 'theme_rose', name: 'Sakura Pink', type: 'theme', value: 'rose', price: 300, description: 'Warna merah muda yang lembut.' },
     { id: 'theme_amber', name: 'Sunset Gold', type: 'theme', value: 'amber', price: 500, description: 'Energi semangat matahari terbenam.' },
+    { id: 'theme_cyan', name: 'Ocean Breeze', type: 'theme', value: 'cyan', price: 600, description: 'Ketenangan ombak samudra biru.' },
     { id: 'theme_violet', name: 'Royal Purple', type: 'theme', value: 'violet', price: 800, description: 'Kesan mewah dan elegan.' },
     
     // BORDERS
     { id: 'border_none', name: 'Standar', type: 'border', value: 'none', price: 0, description: 'Bingkai standar sekolah.' },
     { id: 'border_nature', name: 'Forest Guardian', type: 'border', value: 'nature', price: 200, description: 'Energi alam dengan aksen dedaunan hijau.' },
+    { id: 'border_pixel', name: 'Pixel Retro', type: 'border', value: 'pixel', price: 350, description: 'Gaya klasik 8-bit yang nostalgia.' },
+    { id: 'border_glitch', name: 'Neon Glitch', type: 'border', value: 'glitch', price: 700, description: 'Efek kerusakan digital yang artistik.' },
     { id: 'border_electric', name: 'Thunder Storm', type: 'border', value: 'electric', price: 400, description: 'Energi listrik statis bertegangan tinggi.' },
     { id: 'border_fire', name: 'Magma Warrior', type: 'border', value: 'fire', price: 550, description: 'Api abadi yang membakar semangat juara.' },
+    { id: 'border_galaxy', name: 'Galaxy Swirl', type: 'border', value: 'galaxy', price: 900, description: 'Keindahan nebula di luar angkasa.' },
     { id: 'border_shadow', name: 'Shadow Assassin', type: 'border', value: 'shadow', price: 1200, description: 'Diselimuti aura kegelapan misterius.' },
     { id: 'border_cyber', name: 'Cyberpunk HUD', type: 'border', value: 'cyber', price: 0, description: 'Teknologi hologram masa depan.' },
     { id: 'border_royal', name: 'King Crown', type: 'border', value: 'royal', price: 0, description: 'Mahkota emas murni.' },

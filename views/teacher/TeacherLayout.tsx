@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Users, LogOut, School, ChevronRight, Bell, Database, Trash2, Download, UserX, Loader2, Filter, Check, AlertTriangle, X, Terminal, CheckCircle2, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, School, ChevronRight, Bell, Database, Trash2, Download, UserX, Loader2, Filter, Check, AlertTriangle, X, Terminal, CheckCircle2, Globe, FileText } from 'lucide-react';
 import { useAuth } from '../../App';
 import DashboardView from './DashboardView';
 import StudentsView from './StudentsView';
+import ReportGenerator from './ReportGenerator';
 import { api } from '../../services/mockData';
 import { submitToGoogleFormBackground } from '../../services/sheetService';
 import { User } from '../../types';
@@ -16,7 +17,7 @@ interface ProcessLog {
 }
 
 const TeacherLayout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'students'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'reports'>('dashboard');
   const { logout, user } = useAuth();
   const [notifCount, setNotifCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -234,6 +235,14 @@ const TeacherLayout: React.FC = () => {
                     Data Siswa
                     {activeTab === 'students' && <ChevronRight className="w-4 h-4 ml-auto" />}
                 </button>
+                <button 
+                    onClick={() => setActiveTab('reports')}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'reports' ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                >
+                    <FileText className="w-5 h-5" />
+                    Laporan & Cetak
+                    {activeTab === 'reports' && <ChevronRight className="w-4 h-4 ml-auto" />}
+                </button>
             </div>
 
             {/* Aksi Cepat */}
@@ -335,7 +344,7 @@ const TeacherLayout: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-10 scroll-smooth">
-          {activeTab === 'dashboard' ? <DashboardView /> : <StudentsView />}
+          {activeTab === 'dashboard' ? <DashboardView /> : activeTab === 'students' ? <StudentsView /> : <ReportGenerator />}
         </div>
       </main>
 

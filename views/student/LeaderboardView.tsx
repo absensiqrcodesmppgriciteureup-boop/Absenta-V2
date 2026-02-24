@@ -64,9 +64,9 @@ const LeaderboardView: React.FC = () => {
                             return (
                                 <div 
                                     key={student.uid} 
-                                    className={`flex items-center gap-5 p-4 rounded-3xl transition-all duration-300 border card-hover ${cardClass}`}
+                                    className={`flex items-center gap-3 md:gap-5 p-3 md:p-4 rounded-3xl transition-all duration-300 border card-hover ${cardClass}`}
                                 >
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg flex-shrink-0 transition-transform duration-500 ${rankClass}`}>
+                                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center font-black text-lg flex-shrink-0 transition-transform duration-500 ${rankClass}`}>
                                         {rankIcon || <span>{rank}</span>}
                                     </div>
                                     
@@ -80,13 +80,13 @@ const LeaderboardView: React.FC = () => {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className={`font-bold text-lg truncate flex items-center gap-2 ${isMe ? 'text-indigo-900' : 'text-slate-900'}`}>
+                                        <div>
+                                            <h3 className={`font-bold text-sm md:text-lg leading-tight truncate ${isMe ? 'text-indigo-900' : 'text-slate-900'}`}>
                                                 {student.name}
-                                                {isMe && <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] rounded-full uppercase tracking-widest">Saya</span>}
+                                                {isMe && <span className="ml-2 inline-block px-2 py-0.5 bg-indigo-600 text-white text-[10px] rounded-full uppercase tracking-widest align-middle">Saya</span>}
                                             </h3>
                                         </div>
-                                        <div className="flex items-center gap-3 mt-1">
+                                        <div className="flex items-center gap-2 md:gap-3 mt-1 whitespace-nowrap">
                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{student.class}</span>
                                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                             <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Level {student.level}</span>
